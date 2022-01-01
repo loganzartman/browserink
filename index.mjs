@@ -17,6 +17,7 @@ const main = () => {
   const onPointerDown = (event) => {
     dragging = true;
     brush.moveTo(eventPos(event));
+    event.preventDefault();
   };
 
   const onPointerUp = (event) => {
@@ -29,6 +30,7 @@ const main = () => {
         brush.strokeTo(eventPos(e));
       }
       brush.strokeTo(eventPos(event));
+      event.preventDefault();
     }
   };
 
