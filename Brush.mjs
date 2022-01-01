@@ -5,7 +5,7 @@ export class Brush {
     this.prevPos = null;
     this.prevTime = 0;
     this.prevSpeedFactor = 1.0;
-    this.size = 8.0;
+    this.size = 32.0;
     this.density = 2.0;
   }
 
