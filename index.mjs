@@ -25,6 +25,9 @@ const main = () => {
 
   const onPointerRawUpdate = (event) => {
     if (dragging) {
+      for (const e of event.getCoalescedEvents()) {
+        brush.strokeTo(eventPos(e));
+      }
       brush.strokeTo(eventPos(event));
     }
   };
