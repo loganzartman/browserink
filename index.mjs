@@ -36,7 +36,7 @@ const main = () => {
 
   window.addEventListener("pointerdown", onPointerDown, false);
   window.addEventListener("pointerup", onPointerUp, false);
-  window.addEventListener("pointerrawupdate", onPointerRawUpdate, false);
+  window.addEventListener("pointermove", onPointerRawUpdate, false);
 };
 
 window.addEventListener("load", () => main(), false);
