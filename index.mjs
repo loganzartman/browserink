@@ -1,4 +1,4 @@
-import { Brush } from "./brush.mjs";
+import { Brush } from "./Brush.mjs";
 
 const main = () => {
   const canvas = document.getElementById("canvas");
