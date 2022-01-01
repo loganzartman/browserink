@@ -34,17 +34,18 @@ export class Brush {
       const f = i / steps;
       const px = this.prevPos[0] + dx * f;
       const py = this.prevPos[1] + dy * f;
-      this.c.beginPath();
-      this.c.ellipse(
-        px,
-        py,
-        prevSize + dSize * f,
-        prevSize + dSize * f,
-        0,
-        0,
-        Math.PI * 2
-      );
-      this.c.fill();
+      this.c.fillRect(px, py, prevSize + dSize * f, prevSize + dSize * f);
+      // this.c.beginPath();
+      // this.c.ellipse(
+      //   px,
+      //   py,
+      //   prevSize + dSize * f,
+      //   prevSize + dSize * f,
+      //   0,
+      //   0,
+      //   Math.PI * 2
+      // );
+      // this.c.fill();
     }
     this.prevPos = pos;
     this.prevTime = performance.now();
