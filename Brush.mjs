@@ -11,6 +11,7 @@ export class Brush {
     this.color = options.color;
     this._size = options.size;
     this._hardness = options.hardness;
+    this.opacity = options.opacity;
     this.density = options.density;
 
     this._updateStampTexture();
@@ -54,8 +55,10 @@ export class Brush {
     const c = this._colorizedTexture.getContext('2d');
     c.globalCompositeOperation = 'copy';
     c.fillStyle = tint;
+    c.globalAlpha = this.opacity;
     c.fillRect(0, 0, this.size, this.size);
     c.globalCompositeOperation = 'destination-in';
+    c.globalAlpha = 1;
     c.drawImage(this._stampTexture, 0, 0, this.size, this.size);
   }
 
