@@ -12,6 +12,10 @@ const main = () => {
   const bufferContext = buffer.getContext("2d");
   const snapshotter = new Snapshotter(buffer);
 
+  const clear = () => {
+    bufferContext.fillStyle = options.color;
+    bufferContext.fillRect(0, 0, buffer.width, buffer.height);
+  };
   const resize = () => {
     buffer.width = display.width =
       window.innerWidth * window.devicePixelRatio * options.resolutionScale;
@@ -32,6 +36,7 @@ const main = () => {
   const guiEdit = gui.addFolder('Edit');
   guiEdit.add({undo: () => snapshotter.undo()}, "undo");
   guiEdit.add({redo: () => snapshotter.redo()}, "redo");
+  guiEdit.add({clear}, "clear").name('clear to color');
 
   const eventPos = (event) => [
     (event.pageX - canvas.offsetLeft) *
