@@ -1,8 +1,10 @@
 import { Brush } from "./Brush.mjs";
+import dat from './dat.gui.module.js';
 
 const resolutionScale = 1.0;
 
 const main = () => {
+  const gui = new dat.GUI();
   const display = document.getElementById("canvas");
   const buffer = document.createElement("canvas");
   const displayContext = display.getContext("2d");
