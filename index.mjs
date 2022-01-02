@@ -25,6 +25,7 @@ const main = () => {
       resolutionScale,
   ];
 
+  let redrewBeforeFrame = false;
   let dragging = false;
   let latestPos = [0, 0];
 
@@ -57,7 +58,16 @@ const main = () => {
       event.preventDefault();
     }
     updateDisplay();
+    redrewBeforeFrame = true;
   };
+
+  requestAnimationFrame(function af() {
+    if (!redrewBeforeFrame) {
+      updateDisplay();
+    }
+    redrewBeforeFrame = false;
+    requestAnimationFrame(af);
+  });
 
   window.addEventListener("resize", () => resize(), false);
   window.addEventListener("pointerdown", onPointerDown, false);
