@@ -6,6 +6,7 @@ export class Brush {
     this.prevPos = null;
     this.travel = 0;
     this.size = 32;
+    this.hardness = 0.8;
     this.density = 4;
   }
 
@@ -23,7 +24,6 @@ export class Brush {
 
   _splat(context, params) {
     const c = context;
-    c.fillStyle = `hsla(${Date.now()*0.1%360},50%,50%,0.5)`
     c.save();
     c.translate(params.x, params.y);
     c.scale(params.size, params.size);
@@ -79,6 +79,10 @@ export class Brush {
     const splatSteps = Math.floor(this.travel / this.splatSpacing);
     for (let i = 0; i < splatSteps; ++i) {
       const blend = lerp(a, b, (i + 1) / splatSteps);
+      const fill = context.createRadialGradient(0, 0, 0, 0, 0, 1);
+      fill.addColorStop(this.hardness, `hsla(${Date.now()*0.1%360},50%,50%,1.0)`);
+      fill.addColorStop(1, `hsla(${Date.now()*0.1%360},50%,50%,0.0)`);
+      context.fillStyle = fill;
       this._splat(context, blend);
     }
     this.travel %= this.splatSpacing;
