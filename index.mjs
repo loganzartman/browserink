@@ -29,6 +29,9 @@ const main = () => {
   gui.add(options, "hardness").min(0).max(1).onChange(() => {brush.hardness = options.hardness});
   gui.add(options, "opacity").min(0).max(1).step(0.01).onChange(() => {brush.opacity = options.opacity});
   gui.add(options, "density").min(1).max(16).step(1).onChange(() => {brush.density = options.density});
+  const guiEdit = gui.addFolder('Edit');
+  guiEdit.add({undo: () => snapshotter.undo()}, "undo");
+  guiEdit.add({redo: () => snapshotter.redo()}, "redo");
 
   const eventPos = (event) => [
     (event.pageX - canvas.offsetLeft) *
@@ -66,16 +69,19 @@ const main = () => {
   };
 
   const onPointerDown = (event) => {
+    if (event.target !== display) {
+      return;
+    }
     dragging = true;
     brush.moveTo(eventPos(event));
     snapshotter.save();
     console.log('save');
-    if (event.target === display) {
-      event.preventDefault();
-    }
   };
 
   const onPointerUp = (event) => {
+    if (event.target !== display) {
+      return;
+    }
     dragging = false;
   };
 
