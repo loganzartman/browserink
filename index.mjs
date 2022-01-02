@@ -25,7 +25,6 @@ const main = () => {
       resolutionScale,
   ];
 
-  let redrewBeforeFrame = false;
   let dragging = false;
   let latestPos = [0, 0];
 
@@ -57,15 +56,10 @@ const main = () => {
       brush.strokeTo(bufferContext, eventPos(event));
       event.preventDefault();
     }
-    updateDisplay();
-    redrewBeforeFrame = true;
   };
 
   requestAnimationFrame(function af() {
-    if (!redrewBeforeFrame) {
-      updateDisplay();
-    }
-    redrewBeforeFrame = false;
+    updateDisplay();
     requestAnimationFrame(af);
   });
 
