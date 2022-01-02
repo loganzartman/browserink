@@ -1,4 +1,5 @@
 import { lerp } from "./lerp.mjs";
+import { defaultOptions as options } from "./options.mjs";
 
 export class Brush {
   constructor() {
@@ -7,9 +8,10 @@ export class Brush {
     this.prevTravelPos = null;
     this.prevPos = null;
     this.travel = 0;
-    this._size = 32;
-    this._hardness = 0.8;
-    this.density = 4;
+    this.color = options.color;
+    this._size = options.size;
+    this._hardness = options.hardness;
+    this.density = options.density;
 
     this._updateStampTexture();
   }
@@ -119,7 +121,7 @@ export class Brush {
       y: pos[1],
       size: this.size,
     };
-    const color = 'red';
+    const color = this.color;
 
     const stampSteps = Math.floor(this.travel / this.stampSpacing);
     for (let i = 0; i < stampSteps; ++i) {
