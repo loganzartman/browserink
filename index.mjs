@@ -15,6 +15,10 @@ const main = () => {
   const clear = () => {
     bufferContext.clearRect(0, 0, buffer.width, buffer.height);
   };
+  const exportImage = async () => {
+    const blob = await new Promise((resolve) => buffer.toBlob(resolve));
+    window.open(URL.createObjectURL(blob), "_blank");
+  };
   const resize = () => {
     buffer.width = display.width =
       window.innerWidth * window.devicePixelRatio * options.resolutionScale;
@@ -37,6 +41,7 @@ const main = () => {
   guiEdit.add({undo: () => snapshotter.undo()}, "undo");
   guiEdit.add({redo: () => snapshotter.redo()}, "redo");
   guiEdit.add({clear}, "clear");
+  guiEdit.add({exportImage}, "exportImage");
 
   const eventPos = (event) => [
     (event.pageX - canvas.offsetLeft) *
