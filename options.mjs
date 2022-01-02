@@ -6,4 +6,5 @@ export const defaultOptions = {
   hardness: 0.8,
   opacity: 1.0,
   density: 4,
+  jitter: 0,
 };

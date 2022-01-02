@@ -13,6 +13,7 @@ export class Brush {
     this._hardness = options.hardness;
     this.opacity = options.opacity;
     this.density = options.density;
+    this.jitter = options.jitter;
 
     this._updateStampTexture();
   }
@@ -74,6 +75,11 @@ export class Brush {
     const c = context;
     c.save();
     c.translate(params.x, params.y);
+    if (this.jitter) {
+      const length = Math.random() * Math.random() * this.jitter;
+      const angle = Math.random() * Math.PI * 2;
+      c.translate(Math.cos(angle) * length, Math.sin(angle) * length);
+    }
     c.scale(params.size, params.size);
 
     this._updateColorizedTexture(params.color);
