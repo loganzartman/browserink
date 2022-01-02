@@ -1,17 +1,19 @@
 import { Brush } from "./Brush.mjs";
 
+const resolutionScale = 1.0;
+
 const main = () => {
   const canvas = document.getElementById("canvas");
-  canvas.width = window.innerWidth * window.devicePixelRatio;
-  canvas.height = window.innerHeight * window.devicePixelRatio;
+  canvas.width = window.innerWidth * window.devicePixelRatio * resolutionScale;
+  canvas.height = window.innerHeight * window.devicePixelRatio * resolutionScale;
   const c = canvas.getContext('2d');
   let dragging = false;
 
   const brush = new Brush(c);
 
   const eventPos = (event) => [
-    (event.pageX - canvas.offsetLeft) * window.devicePixelRatio,
-    (event.pageY - canvas.offsetTop) * window.devicePixelRatio,
+    (event.pageX - canvas.offsetLeft) * window.devicePixelRatio * resolutionScale,
+    (event.pageY - canvas.offsetTop) * window.devicePixelRatio * resolutionScale,
   ];
 
   const onPointerDown = (event) => {
