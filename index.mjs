@@ -58,7 +58,7 @@ const main = () => {
     brush.drawCursor(displayContext, latestPos);
   };
 
-  const onKeyUp = (event) => {
+  const onKeyDown = (event) => {
     if (event.ctrlKey && event.key === 'z') {
       snapshotter.undo();
       event.preventDefault();
@@ -114,7 +114,7 @@ const main = () => {
   });
 
   window.addEventListener("resize", () => resize(), false);
-  window.addEventListener("keyup", onKeyUp, false);
+  window.addEventListener("keydown", onKeyDown, false);
   window.addEventListener("pointerdown", onPointerDown, false);
   window.addEventListener("pointerup", onPointerUp, false);
   window.addEventListener("pointerrawupdate", onPointerRawUpdate, false);
