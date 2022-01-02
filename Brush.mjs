@@ -1,13 +1,12 @@
 import { lerp } from "./lerp.mjs";
 
 export class Brush {
-  constructor(context) {
-    this.c = context;
+  constructor() {
     this.prevTravelPos = null;
     this.prevPos = null;
     this.travel = 0;
-    this.size = 64;
-    this.density = 1;
+    this.size = 32;
+    this.density = 4;
   }
 
   get splatSpacing() {
@@ -22,17 +21,37 @@ export class Brush {
     this.travel += dist;
   }
 
-  _splat(params) {
-    this.c.fillStyle = 'rgba(0,0,0,0.5)'
-    this.c.save();
-    this.c.translate(params.x, params.y);
-    this.c.scale(params.size, params.size);
+  _splat(context, params) {
+    const c = context;
+    c.fillStyle = `hsla(${Date.now()*0.1%360},50%,50%,0.5)`
+    c.save();
+    c.translate(params.x, params.y);
+    c.scale(params.size, params.size);
 
-    this.c.beginPath();
-    this.c.ellipse(0, 0, 1, 1, 0, 0, Math.PI * 2);
-    this.c.fill();
+    c.beginPath();
+    c.ellipse(0, 0, 1, 1, 0, 0, Math.PI * 2);
+    c.fill();
 
-    this.c.restore();
+    c.restore();
+  }
+
+  drawCursor(context, pos) {
+    const c = context;
+    c.save();
+
+    c.strokeStyle = 'white';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.ellipse(...pos, this.size, this.size, 0, 0, Math.PI * 2);
+    c.stroke();
+    
+    c.strokeStyle = 'black';
+    c.lineWidth = 1;
+    c.beginPath();
+    c.ellipse(...pos, this.size, this.size, 0, 0, Math.PI * 2);
+    c.stroke();
+    
+    c.restore();
   }
 
   moveTo(pos) {
@@ -40,7 +59,7 @@ export class Brush {
     this.prevPos = pos;
   }
 
-  strokeTo(pos) {
+  strokeTo(context, pos) {
     this._updateTravel(pos);
     if (this.travel < this.splatSpacing) {
       return;
@@ -60,7 +79,7 @@ export class Brush {
     const splatSteps = Math.floor(this.travel / this.splatSpacing);
     for (let i = 0; i < splatSteps; ++i) {
       const blend = lerp(a, b, (i + 1) / splatSteps);
-      this._splat(blend);
+      this._splat(context, blend);
     }
     this.travel %= this.splatSpacing;
     this.prevPos = pos;
