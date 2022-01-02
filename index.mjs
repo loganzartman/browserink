@@ -1,6 +1,7 @@
 import { Brush } from "./Brush.mjs";
 import dat from "./dat.gui.module.js";
 import { defaultOptions as options } from "./options.mjs";
+import { Snapshotter } from "./Snapshotter.mjs";
 
 const main = () => {
   const brush = new Brush();
@@ -9,6 +10,7 @@ const main = () => {
   const buffer = document.createElement("canvas");
   const displayContext = display.getContext("2d");
   const bufferContext = buffer.getContext("2d");
+  const snapshotter = new Snapshotter(buffer);
 
   const resize = () => {
     buffer.width = display.width =
@@ -47,9 +49,27 @@ const main = () => {
     brush.drawCursor(displayContext, latestPos);
   };
 
+  const onKeyUp = (event) => {
+    if (event.ctrlKey && event.key === 'z') {
+      snapshotter.undo();
+      event.preventDefault();
+      console.log('undo');
+    }
+    if (event.ctrlKey && event.key === 'y') {
+      snapshotter.redo();
+      event.preventDefault();
+    }
+    if (event.ctrlKey && event.key === 'Z') {
+      snapshotter.redo();
+      event.preventDefault();
+    }
+  };
+
   const onPointerDown = (event) => {
     dragging = true;
     brush.moveTo(eventPos(event));
+    snapshotter.save();
+    console.log('save');
     if (event.target === display) {
       event.preventDefault();
     }
@@ -82,6 +102,7 @@ const main = () => {
   });
 
   window.addEventListener("resize", () => resize(), false);
+  window.addEventListener("keyup", onKeyUp, false);
   window.addEventListener("pointerdown", onPointerDown, false);
   window.addEventListener("pointerup", onPointerUp, false);
   window.addEventListener("pointerrawupdate", onPointerRawUpdate, false);
