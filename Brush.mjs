@@ -79,6 +79,7 @@ export class Brush {
       c.translate(Math.cos(angle) * length, Math.sin(angle) * length);
     }
     c.scale(params.size, params.size);
+    c.rotate(Math.random() * Math.PI * 2);
 
     this._updateColorizedTexture(params.color);
     c.drawImage(this._colorizedTexture, -0.5, -0.5, 1, 1);
