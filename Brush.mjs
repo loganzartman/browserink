@@ -9,6 +9,7 @@ export class Brush {
     this.prevTravelPos = null;
     this.prevPos = null;
     this.travel = 0;
+
     this.color = options.color;
     this._size = options.size;
     this._hardness = options.hardness;
@@ -39,26 +40,32 @@ export class Brush {
     return this.size / this.density;
   }
 
+  _expandedTextureSize(size) {
+    return size + (1 - this.hardness) * size;
+  }
+
   _updateStampTexture() {
-    this._stampTexture.width = this._stampTexture.height = Math.ceil(this.size);
-    this._colorizedTexture.width = this._colorizedTexture.height = Math.ceil(this.size);
+    const textureSize = Math.ceil(this._expandedTextureSize(this.size));
+    this._stampTexture.width = this._stampTexture.height = textureSize;
+    this._colorizedTexture.width = this._colorizedTexture.height = textureSize;
     drawGradient({
       context: this._stampTexture.getContext("2d"),
-      size: this.size,
+      size: textureSize,
       hardness: this.hardness,
-      dither: 0.1,
+      dither: 0.5,
     });
   }
 
   _updateColorizedTexture(tint) {
     const c = this._colorizedTexture.getContext('2d');
+    const textureSize = this._colorizedTexture.width;
     c.globalCompositeOperation = 'copy';
     c.fillStyle = tint;
     c.globalAlpha = this.opacity;
-    c.fillRect(0, 0, this.size, this.size);
+    c.fillRect(0, 0, textureSize, textureSize);
     c.globalCompositeOperation = 'destination-in';
     c.globalAlpha = 1;
-    c.drawImage(this._stampTexture, 0, 0, this.size, this.size);
+    c.drawImage(this._stampTexture, 0, 0);
   }
 
   _updateTravel(pos) {
@@ -78,7 +85,8 @@ export class Brush {
       const angle = Math.random() * Math.PI * 2;
       c.translate(Math.cos(angle) * length, Math.sin(angle) * length);
     }
-    c.scale(params.size, params.size);
+    const size = this._expandedTextureSize(params.size);
+    c.scale(size, size);
     c.rotate(Math.random() * Math.PI * 2);
 
     this._updateColorizedTexture(params.color);
