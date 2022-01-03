@@ -13,7 +13,8 @@ export const drawGradient = ({context, size, hardness, noise=0}={}) => {
       const fx = x * 2 / (size - 1) - 1;
       const fy = y * 2 / (size - 1) - 1;
       const f = (1 / softness) - (Math.sqrt(fx ** 2 + fy ** 2) / softness);
-      const alpha = easeInOutQuad(clamp(f + Math.random() * noise * 0.5 - noise, 0, 1));
+      const noisyF = f * (1 - noise) + f * Math.random() * noise;
+      const alpha = easeInOutQuad(clamp(noisyF, 0, 1));
 
       const index = (y * size + x) * 4;
       data.data[index+0] = 255;
