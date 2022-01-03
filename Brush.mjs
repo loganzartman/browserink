@@ -1,5 +1,6 @@
 import { lerp } from "./lerp.mjs";
 import { defaultOptions as options } from "./options.mjs";
+import { drawGradient } from "./drawGradient.mjs";
 
 export class Brush {
   constructor() {
@@ -39,17 +40,14 @@ export class Brush {
   }
 
   _updateStampTexture() {
-    this._stampTexture.width = this._stampTexture.height = this.size;
-    this._colorizedTexture.width = this._colorizedTexture.height = this.size;
-    const c = this._stampTexture.getContext('2d');
-    c.save();
-    c.scale(this.size, this.size);
-    const fill = c.createRadialGradient(0.5, 0.5, 0, 0.5, 0.5, 0.5);
-    fill.addColorStop(this.hardness, 'rgba(255,255,255,1)');
-    fill.addColorStop(1, 'rgba(255,255,255,0)');
-    c.fillStyle = fill;
-    c.fillRect(0, 0, 1, 1);
-    c.restore();
+    this._stampTexture.width = this._stampTexture.height = Math.ceil(this.size);
+    this._colorizedTexture.width = this._colorizedTexture.height = Math.ceil(this.size);
+    drawGradient({
+      context: this._stampTexture.getContext("2d"),
+      size: this.size,
+      hardness: this.hardness,
+      dither: 0.1,
+    });
   }
 
   _updateColorizedTexture(tint) {
