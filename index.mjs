@@ -74,7 +74,6 @@ const main = () => {
     if (event.ctrlKey && event.key === 'z') {
       snapshotter.undo();
       event.preventDefault();
-      console.log('undo');
     }
     if (event.ctrlKey && event.key === 'y') {
       snapshotter.redo();
@@ -93,7 +92,6 @@ const main = () => {
     dragging = true;
     brush.moveTo(eventPos(event));
     snapshotter.save();
-    console.log('save');
   };
 
   const onPointerUp = (event) => {
