@@ -4,15 +4,14 @@ const easeInOutQuad = (f) => f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) /
 const clamp = (f, a, b) => Math.max(a, Math.min(b, f));
 
 export const drawGradient = ({context, size, hardness, noise=0}={}) => {
-  size = Math.ceil(size);
+  size = Math.floor(size);
   const softness = Math.max(1 - hardness, 0.01);
   const data = context.getImageData(0, 0, size, size);
 
-  const half = size / 2;
   for (let x=0; x<size; ++x) {
     for (let y=0; y<size; ++y) {
-      const fx = (x - half) / half;
-      const fy = (y - half) / half;
+      const fx = x * 2 / (size - 1) - 1;
+      const fy = y * 2 / (size - 1) - 1;
       const f = (1 / softness) - (Math.sqrt(fx ** 2 + fy ** 2) / softness);
       const alpha = easeInOutQuad(clamp(f + Math.random() * noise * 0.5 - noise, 0, 1));
 
