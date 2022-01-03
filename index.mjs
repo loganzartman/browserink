@@ -20,10 +20,10 @@ const main = () => {
     window.open(URL.createObjectURL(blob), "_blank");
   };
   const resize = () => {
-    buffer.width = display.width =
-      window.innerWidth * window.devicePixelRatio * options.resolutionScale;
-    buffer.height = display.height =
-      window.innerHeight * window.devicePixelRatio * options.resolutionScale;
+    display.width = window.innerWidth * window.devicePixelRatio;
+    display.height = window.innerHeight * window.devicePixelRatio;
+    buffer.width = window.innerWidth * window.devicePixelRatio * options.resolutionScale;
+    buffer.height = window.innerHeight * window.devicePixelRatio * options.resolutionScale;
   };
   resize();
 
@@ -58,9 +58,16 @@ const main = () => {
 
   const updateDisplay = () => {
     displayContext.clearRect(0, 0, display.width, display.height);
-    displayContext.drawImage(buffer, 0, 0);
+    displayContext.imageSmoothingEnabled = false;
+    displayContext.drawImage(buffer, 0, 0, display.width, display.height);
 
+    displayContext.save();
+    displayContext.scale(
+      display.width / buffer.width, 
+      display.height / buffer.height
+    );
     brush.drawCursor(displayContext, latestPos);
+    displayContext.restore();
   };
 
   const onKeyDown = (event) => {
