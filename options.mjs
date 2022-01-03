@@ -1,10 +1,10 @@
 export const defaultOptions = {
-  lowLatency: false,
+  lowLatency: true,
   resolutionScale: 1.0,
   color: 'rgb(0,0,0)',
   size: 32,
-  hardness: 0.8,
+  hardness: 0.75,
   opacity: 1.0,
-  density: 4,
+  density: 8,
   jitter: 0,
 };
