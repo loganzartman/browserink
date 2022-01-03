@@ -14,6 +14,7 @@ const main = () => {
 
   const clear = () => {
     bufferContext.clearRect(0, 0, buffer.width, buffer.height);
+    updateDisplay();
   };
   const exportImage = async () => {
     const blob = await new Promise((resolve) => buffer.toBlob(resolve));
@@ -73,14 +74,17 @@ const main = () => {
   const onKeyDown = (event) => {
     if (event.ctrlKey && event.key === 'z') {
       snapshotter.undo();
+      updateDisplay();
       event.preventDefault();
     }
     if (event.ctrlKey && event.key === 'y') {
       snapshotter.redo();
+      updateDisplay();
       event.preventDefault();
     }
     if (event.ctrlKey && event.key === 'Z') {
       snapshotter.redo();
+      updateDisplay();
       event.preventDefault();
     }
   };
@@ -127,7 +131,7 @@ const main = () => {
   window.addEventListener("keydown", onKeyDown, false);
   window.addEventListener("pointerdown", onPointerDown, false);
   window.addEventListener("pointerup", onPointerUp, false);
-  window.addEventListener("pointerrawupdate", onPointerRawUpdate, false);
+  window.addEventListener("pointermove", onPointerRawUpdate, false);
 };
 
 window.addEventListener("load", () => main(), false);
