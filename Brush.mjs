@@ -13,6 +13,7 @@ export class Brush {
     this.color = options.color;
     this._size = options.size;
     this._hardness = options.hardness;
+    this._noise = options.noise;
     this.opacity = options.opacity;
     this.density = options.density;
     this.jitter = options.jitter;
@@ -35,6 +36,14 @@ export class Brush {
     this._hardness = hardness;
     this._updateStampTexture();
   }
+
+  get noise() {
+    return this._noise;
+  }
+  set noise(noise) {
+    this._noise = noise;
+    this._updateStampTexture();
+  }
   
   get stampSpacing() {
     return this.size / this.density;
@@ -52,7 +61,7 @@ export class Brush {
       context: this._stampTexture.getContext("2d"),
       size: textureSize,
       hardness: this.hardness,
-      dither: 0.5,
+      noise: this.noise,
     });
   }
 

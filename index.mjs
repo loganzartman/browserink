@@ -32,8 +32,9 @@ const main = () => {
   gui.add(options, "lowLatency");
   gui.add(options, 'resolutionScale').min(0.1).max(2.0).step(0.1).onFinishChange(() => resize());
   gui.addColor(options, "color").onChange(() => {brush.color = options.color});
-  gui.add(options, "size").min(1).max(1024).onChange(() => {brush.size = options.size});
-  gui.add(options, "hardness").min(0).max(1).onChange(() => {brush.hardness = options.hardness});
+  gui.add(options, "size").min(1).max(1024).onFinishChange(() => {brush.size = options.size});
+  gui.add(options, "hardness").min(0).max(1).onFinishChange(() => {brush.hardness = options.hardness});
+  gui.add(options, "noise").min(0).max(1).onFinishChange(() => {brush.noise = options.noise});
   gui.add(options, "opacity").min(0).max(1).step(0.01).onChange(() => {brush.opacity = options.opacity});
   gui.add(options, "density").min(1).max(16).step(1).onChange(() => {brush.density = options.density});
   gui.add(options, "jitter").min(0).max(1024).step(1).onChange(() => {brush.jitter = options.jitter});
