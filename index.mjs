@@ -55,7 +55,7 @@ const main = () => {
   });
 
   let dragging = false;
-  let latestPos = [0, 0];
+  let latestPos = {x: 0, y: 0};
 
   const updateDisplay = () => {
     displayContext.clearRect(0, 0, display.width, display.height);

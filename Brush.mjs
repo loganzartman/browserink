@@ -8,6 +8,11 @@ export class Brush {
     this._colorizedTexture = document.createElement('canvas');
     this._colorizedColor = null;
     this.travel = 0; 
+    this.state = {
+      x: 0,
+      y: 0,
+      pressure: 0.5,
+    };
 
     this.color = options.color;
     this._size = options.size;
@@ -98,11 +103,10 @@ export class Brush {
     c.restore();
   }
 
-  drawCursor({context, x, y}) {
-    const c = context;
+  drawCursor({context: c, x, y}) {
     c.save();
 
-    const s = Math.max(4, this.size * 0.5 * this.lastPressure);
+    const s = Math.max(4, this.size * 0.5 * this.state.pressure);
 
     c.strokeStyle = 'white';
     c.lineWidth = 3;
