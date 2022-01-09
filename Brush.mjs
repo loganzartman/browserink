@@ -6,6 +6,7 @@ export class Brush {
   constructor() {
     this._stampTexture = document.createElement('canvas');
     this._colorizedTexture = document.createElement('canvas');
+    this._colorizedColor = null;
     this.travel = 0; 
 
     this.color = options.color;
@@ -61,13 +62,18 @@ export class Brush {
       hardness: this.hardness,
       noise: this.noise,
     });
+    this._updateColorizedTexture(this._colorizedColor, true);
   }
 
-  _updateColorizedTexture(tint) {
+  _updateColorizedTexture(color, forceUpdate=false) {
+    if (!forceUpdate && color === this._colorizedColor) {
+      return;
+    }
+    this._colorizedColor = color;
     const c = this._colorizedTexture.getContext('2d');
     const textureSize = this._colorizedTexture.width;
     c.globalCompositeOperation = 'copy';
-    c.fillStyle = tint;
+    c.fillStyle = color;
     c.globalAlpha = this.opacity;
     c.fillRect(0, 0, textureSize, textureSize);
     c.globalCompositeOperation = 'destination-in';
