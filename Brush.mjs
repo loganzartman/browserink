@@ -74,10 +74,8 @@ export class Brush {
     const textureSize = this._colorizedTexture.width;
     c.globalCompositeOperation = 'copy';
     c.fillStyle = color;
-    c.globalAlpha = this.opacity;
     c.fillRect(0, 0, textureSize, textureSize);
     c.globalCompositeOperation = 'destination-in';
-    c.globalAlpha = 1;
     c.drawImage(this._stampTexture, 0, 0);
   }
 
@@ -94,6 +92,7 @@ export class Brush {
     c.rotate(Math.random() * Math.PI * 2);
 
     this._updateColorizedTexture(color);
+    c.globalAlpha = this.opacity;
     c.drawImage(this._colorizedTexture, -0.5, -0.5, 1, 1);
 
     c.restore();
