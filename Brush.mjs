@@ -6,9 +6,7 @@ export class Brush {
   constructor() {
     this._stampTexture = document.createElement('canvas');
     this._colorizedTexture = document.createElement('canvas');
-    this.prevTravelPos = null;
-    this.prevPos = null;
-    this.travel = 0;
+    this.travel = 0; 
 
     this.color = options.color;
     this._size = options.size;
@@ -46,7 +44,7 @@ export class Brush {
   }
   
   get stampSpacing() {
-    return this.size / this.density;
+    return this.size / this.density * Math.max(0.1, this.state.pressure);
   }
 
   _expandedTextureSize(size) {
@@ -77,83 +75,86 @@ export class Brush {
     c.drawImage(this._stampTexture, 0, 0);
   }
 
-  _updateTravel(pos) {
-    const dx = pos[0] - this.prevTravelPos[0];
-    const dy = pos[1] - this.prevTravelPos[1];
-    const dist = Math.sqrt(dx ** 2 + dy ** 2);
-    this.prevTravelPos = pos;
-    this.travel += dist;
-  }
-
-  _stamp(context, params) {
-    const c = context;
+  _stamp({context: c, x, y, size, color}) {
     c.save();
-    c.translate(params.x, params.y);
+    c.translate(x, y);
     if (this.jitter) {
       const length = Math.random() * Math.random() * this.jitter;
       const angle = Math.random() * Math.PI * 2;
       c.translate(Math.cos(angle) * length, Math.sin(angle) * length);
     }
-    const size = this._expandedTextureSize(params.size);
-    c.scale(size, size);
+    const realSize = this._expandedTextureSize(size);
+    c.scale(realSize, realSize);
     c.rotate(Math.random() * Math.PI * 2);
 
-    this._updateColorizedTexture(params.color);
+    this._updateColorizedTexture(color);
     c.drawImage(this._colorizedTexture, -0.5, -0.5, 1, 1);
 
     c.restore();
   }
 
-  drawCursor(context, pos) {
+  drawCursor({context, x, y}) {
     const c = context;
     c.save();
 
-    const s = this.size * 0.5;
+    const s = Math.max(4, this.size * 0.5 * this.lastPressure);
 
     c.strokeStyle = 'white';
     c.lineWidth = 3;
     c.beginPath();
-    c.ellipse(...pos, s, s, 0, 0, Math.PI * 2);
+    c.ellipse(x, y, s, s, 0, 0, Math.PI * 2);
     c.stroke();
     
     c.strokeStyle = 'black';
     c.lineWidth = 1;
     c.beginPath();
-    c.ellipse(...pos, s, s, 0, 0, Math.PI * 2);
+    c.ellipse(x, y, s, s, 0, 0, Math.PI * 2);
     c.stroke();
     
     c.restore();
   }
 
-  moveTo(pos) {
-    this.prevTravelPos = pos;
-    this.prevPos = pos;
+  moveTo({x, y, pressure}) {
+    this.state = {x, y, pressure};
+    this.lastStamp = {x, y};
+    this.travel = 0;
   }
 
-  strokeTo(context, pos) {
-    this._updateTravel(pos);
+  strokeTo({context, x, y, pressure}) {
+    const lastState = this.state;
+    this.state = {x, y, pressure};
+
+    const dx = x - lastState.x;
+    const dy = y - lastState.y;
+    const dist = Math.sqrt(dx ** 2 + dy ** 2);
+    this.travel += dist;
+
     if (this.travel < this.stampSpacing) {
       return;
     }
 
+    const sdx = x - this.lastStamp.x;
+    const sdy = y - this.lastStamp.y;
+    const sdist = Math.sqrt(sdx ** 2 + sdy ** 2);
+    const stampSteps = Math.floor(sdist / this.stampSpacing);
+
     const a = {
-      x: this.prevPos[0],
-      y: this.prevPos[1],
-      size: this.size,
+      x: this.lastStamp.x,
+      y: this.lastStamp.y,
+      size: lastState.pressure * this.size,
     };
     const b = {
-      x: pos[0],
-      y: pos[1],
-      size: this.size,
+      x: a.x + sdx / sdist * this.stampSpacing * stampSteps,
+      y: a.y + sdy / sdist * this.stampSpacing * stampSteps,
+      size: pressure * this.size,
     };
     const color = this.color;
 
-    const stampSteps = Math.floor(this.travel / this.stampSpacing);
     for (let i = 0; i < stampSteps; ++i) {
       const blend = lerp(a, b, (i + 1) / stampSteps);
-      this._stamp(context, {...blend, color});
+      this._stamp({...blend, context, color});
+      this.lastStamp = {x: blend.x, y: blend.y};
     }
     this.travel %= this.stampSpacing;
-    this.prevPos = pos;
   }
 }

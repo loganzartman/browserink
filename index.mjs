@@ -45,14 +45,14 @@ const main = () => {
   guiEdit.add({clear}, "clear");
   guiEdit.add({exportImage}, "exportImage");
 
-  const eventPos = (event) => [
-    (event.pageX - canvas.offsetLeft) *
+  const eventPos = (event) => ({
+    x: (event.pageX - canvas.offsetLeft) *
       window.devicePixelRatio *
       options.resolutionScale,
-    (event.pageY - canvas.offsetTop) *
+    y: (event.pageY - canvas.offsetTop) *
       window.devicePixelRatio *
       options.resolutionScale,
-  ];
+  });
 
   let dragging = false;
   let latestPos = [0, 0];
@@ -67,7 +67,10 @@ const main = () => {
       display.width / buffer.width, 
       display.height / buffer.height
     );
-    brush.drawCursor(displayContext, latestPos);
+    brush.drawCursor({
+      context: displayContext, 
+      ...latestPos
+    });
     displayContext.restore();
   };
 
@@ -94,7 +97,10 @@ const main = () => {
       return;
     }
     dragging = true;
-    brush.moveTo(eventPos(event));
+    brush.moveTo({
+      ...eventPos(event), 
+      pressure: event.pressure
+    });
     snapshotter.save();
   };
 
@@ -109,9 +115,17 @@ const main = () => {
     latestPos = eventPos(event);
     if (dragging) {
       for (const e of event.getCoalescedEvents()) {
-        brush.strokeTo(bufferContext, eventPos(e));
+        brush.strokeTo({
+          context: bufferContext, 
+          ...eventPos(e), 
+          pressure: event.pressure
+        });
       }
-      brush.strokeTo(bufferContext, eventPos(event));
+      brush.strokeTo({
+        context: bufferContext, 
+        ...eventPos(event), 
+        pressure: event.pressure
+      });
       event.preventDefault();
     }
 
@@ -131,7 +145,7 @@ const main = () => {
   window.addEventListener("keydown", onKeyDown, false);
   window.addEventListener("pointerdown", onPointerDown, false);
   window.addEventListener("pointerup", onPointerUp, false);
-  window.addEventListener("pointermove", onPointerRawUpdate, false);
+  window.addEventListener("pointerrawupdate", onPointerRawUpdate, false);
 };
 
 window.addEventListener("load", () => main(), false);
