@@ -125,13 +125,15 @@ const main = () => {
     latestPos = eventPos(event);
 
     if (dragging) {
-      for (const e of event.getCoalescedEvents()) {
-        brush.strokeTo({
-          context: bufferContext, 
-          ...eventPos(e), 
-          ...eventTilt(e),
-          pressure: event.pressure,
-        });
+      if (event.getCoalescedEvents) {
+        for (const e of event.getCoalescedEvents()) {
+          brush.strokeTo({
+            context: bufferContext,
+            ...eventPos(e),
+            ...eventTilt(e),
+            pressure: event.pressure,
+          });
+        }
       }
       brush.strokeTo({
         context: bufferContext, 
