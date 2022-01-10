@@ -41,6 +41,8 @@ const main = () => {
   gui.add(options, "jitter").min(0).max(1024).step(1).onChange(() => {brush.jitter = options.jitter});
   const guiDynamics = gui.addFolder("Dynamics");
   guiDynamics.add(options, "smoothing").min(0).max(0.9).onChange(() => {brush.smoothing = options.smoothing});
+  guiDynamics.add(options, "pressureFactor").min(0).max(1).onChange(() => {brush.pressureFactor = options.pressureFactor});
+  guiDynamics.add(options, "tiltFactor").min(0).max(1).onChange(() => {brush.tiltFactor = options.tiltFactor});
   const guiEdit = gui.addFolder('Edit');
   guiEdit.add({undo: () => snapshotter.undo()}, "undo");
   guiEdit.add({redo: () => snapshotter.redo()}, "redo");

@@ -24,7 +24,9 @@ export class Brush {
     this.density = options.density;
     this.jitter = options.jitter;
 
-    this.smoothing = 0.5;
+    this.smoothing = options.smoothing;
+    this.pressureFactor = options.pressureFactor;
+    this.tiltFactor = options.tiltFactor;
 
     this._updateStampTexture();
   }
@@ -53,8 +55,12 @@ export class Brush {
     this._updateStampTexture();
   }
 
+  getPressure(pressure) {
+    return 0.5 + (pressure - 0.5) * this.pressureFactor;
+  }
+
   getRatio(tiltMagnitude) {
-    return 1 / (1 + tiltMagnitude * 0.1);
+    return 1 / (1 + tiltMagnitude * this.tiltFactor * 0.1);
   }
 
   get angle() {
@@ -62,7 +68,7 @@ export class Brush {
   }
   
   get stampSpacing() {
-    return this.size / this.density * Math.max(0.1, this.state.pressure) * this.getRatio(this.state.tiltMagnitude);
+    return this.size / this.density * Math.max(0.1, this.getPressure(this.state.pressure)) * this.getRatio(this.state.tiltMagnitude);
   }
 
   _expandedTextureSize(size) {
@@ -119,7 +125,7 @@ export class Brush {
   drawCursor({context: c, x, y}) {
     c.save();
 
-    const s = Math.max(4, this.size * 0.5 * this.state.pressure);
+    const s = Math.max(4, this.size * 0.5 * this.getPressure(this.state.pressure));
 
     c.translate(x, y);
     c.scale(s, s);
@@ -168,14 +174,14 @@ export class Brush {
     const a = {
       x: this.lastStamp.x,
       y: this.lastStamp.y,
-      size: lastState.pressure * this.size,
+      size: this.getPressure(lastState.pressure) * this.size,
       angle: lastState.tiltAngle,
       ratio: this.getRatio(lastState.tiltMagnitude),
     };
     const b = {
       x: a.x + sdx / sdist * this.stampSpacing * stampSteps,
       y: a.y + sdy / sdist * this.stampSpacing * stampSteps,
-      size: pressure * this.size,
+      size: this.getPressure(pressure) * this.size,
       angle: tiltAngle,
       ratio: this.getRatio(tiltMagnitude),
     };

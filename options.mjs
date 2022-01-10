@@ -9,4 +9,6 @@ export const defaultOptions = {
   density: 8,
   jitter: 0,
   smoothing: 0.25,
+  pressureFactor: 1.0,
+  tiltFactor: 1.0,
 };
