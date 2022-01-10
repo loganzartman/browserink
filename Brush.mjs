@@ -51,8 +51,8 @@ export class Brush {
     this._updateStampTexture();
   }
 
-  get ratio() {
-    return 1 / (1 + this.state.tiltMagnitude * 0.1);
+  getRatio(tiltMagnitude) {
+    return 1 / (1 + tiltMagnitude * 0.1);
   }
 
   get angle() {
@@ -60,7 +60,7 @@ export class Brush {
   }
   
   get stampSpacing() {
-    return this.size / this.density * Math.max(0.1, this.state.pressure) * this.ratio;
+    return this.size / this.density * Math.max(0.1, this.state.pressure) * this.getRatio(this.state.tiltMagnitude);
   }
 
   _expandedTextureSize(size) {
@@ -94,7 +94,7 @@ export class Brush {
     c.drawImage(this._stampTexture, 0, 0);
   }
 
-  _stamp({context: c, x, y, size, color}) {
+  _stamp({context: c, x, y, size, angle, ratio, color}) {
     c.save();
     c.translate(x, y);
     if (this.jitter) {
@@ -103,8 +103,8 @@ export class Brush {
       c.translate(Math.cos(angle) * length, Math.sin(angle) * length);
     }
     const realSize = this._expandedTextureSize(size);
-    c.rotate(this.angle);
-    c.scale(realSize, realSize * this.ratio);
+    c.rotate(angle);
+    c.scale(realSize, realSize * ratio);
     c.rotate(Math.random() * Math.PI * 2);
 
     this._updateColorizedTexture(color);
@@ -166,11 +166,15 @@ export class Brush {
       x: this.lastStamp.x,
       y: this.lastStamp.y,
       size: lastState.pressure * this.size,
+      angle: lastState.tiltAngle,
+      ratio: this.getRatio(lastState.tiltMagnitude),
     };
     const b = {
       x: a.x + sdx / sdist * this.stampSpacing * stampSteps,
       y: a.y + sdy / sdist * this.stampSpacing * stampSteps,
       size: pressure * this.size,
+      angle: tiltAngle,
+      ratio: this.getRatio(tiltMagnitude),
     };
     const color = this.color;
 
