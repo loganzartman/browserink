@@ -4,16 +4,42 @@ import { defaultOptions as options } from "./options.mjs";
 import { Snapshotter } from "./Snapshotter.mjs";
 
 const main = () => {
-  const brush = new Brush();
+  let dragging = false;
+  let latestPos = {x: 0, y: 0};
 
+  const brush = new Brush();
   const display = document.getElementById("canvas");
   const buffer = document.createElement("canvas");
-  const displayContext = display.getContext("2d");
-  const bufferContext = buffer.getContext("2d");
+  const displayContext = display.getContext("2d", {
+    alpha: false,
+    desynchronized: true,
+  });
+  const bufferContext = buffer.getContext("2d", {
+    alpha: true,
+    desynchronized: true,
+  });
   const snapshotter = new Snapshotter(buffer);
 
+  const updateDisplay = () => {
+    displayContext.clearRect(0, 0, display.width, display.height);
+    displayContext.imageSmoothingEnabled = false;
+    displayContext.drawImage(buffer, 0, 0, display.width, display.height);
+
+    displayContext.save();
+    displayContext.scale(
+      display.width / buffer.width, 
+      display.height / buffer.height
+    );
+    brush.drawCursor({
+      context: displayContext, 
+      ...latestPos,
+    });
+    displayContext.restore();
+  };
+
   const clear = () => {
-    bufferContext.clearRect(0, 0, buffer.width, buffer.height);
+    bufferContext.fillStyle = 'white';
+    bufferContext.fillRect(0, 0, buffer.width, buffer.height);
     updateDisplay();
   };
   const exportImage = async () => {
@@ -25,6 +51,7 @@ const main = () => {
     display.height = window.innerHeight * window.devicePixelRatio;
     buffer.width = window.innerWidth * window.devicePixelRatio * options.resolutionScale;
     buffer.height = window.innerHeight * window.devicePixelRatio * options.resolutionScale;
+    clear();
   };
   resize();
 
@@ -62,26 +89,6 @@ const main = () => {
     tiltAngle: Math.atan2(event.tiltY, event.tiltX) + Math.PI * 0.5,
     tiltMagnitude: Math.sqrt(event.tiltX ** 2 + event.tiltY ** 2),
   });
-
-  let dragging = false;
-  let latestPos = {x: 0, y: 0};
-
-  const updateDisplay = () => {
-    displayContext.clearRect(0, 0, display.width, display.height);
-    displayContext.imageSmoothingEnabled = false;
-    displayContext.drawImage(buffer, 0, 0, display.width, display.height);
-
-    displayContext.save();
-    displayContext.scale(
-      display.width / buffer.width, 
-      display.height / buffer.height
-    );
-    brush.drawCursor({
-      context: displayContext, 
-      ...latestPos,
-    });
-    displayContext.restore();
-  };
 
   const onKeyDown = (event) => {
     if (event.ctrlKey && event.key === 'z') {
