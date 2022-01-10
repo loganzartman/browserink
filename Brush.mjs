@@ -24,6 +24,8 @@ export class Brush {
     this.density = options.density;
     this.jitter = options.jitter;
 
+    this.smoothing = 0.5;
+
     this._updateStampTexture();
   }
 
@@ -144,9 +146,10 @@ export class Brush {
     this.travel = 0;
   }
 
-  strokeTo({context, x, y, pressure, tiltAngle, tiltMagnitude}) {
+  strokeTo({context, ...state}) {
     const lastState = this.state;
-    this.state = {x, y, pressure, tiltAngle, tiltMagnitude};
+    this.state = lerp(this.state, state, 1 - this.smoothing ** 0.3);
+    const {x, y, pressure, tiltAngle, tiltMagnitude} = this.state;
 
     const dx = x - lastState.x;
     const dy = y - lastState.y;

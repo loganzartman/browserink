@@ -7,6 +7,7 @@ export const lerp = (a, b, f) => {
     Object.keys(a).map((k) => {
       let v;
       switch (k) {
+        case 'tiltAngle':
         case 'angle': {
           const diff = angleDiff(b[k], a[k]);
           v = mod(a[k] + fClamped * diff, Math.PI * 2);

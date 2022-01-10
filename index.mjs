@@ -39,6 +39,8 @@ const main = () => {
   gui.add(options, "opacity").min(0).max(1).step(0.01).onChange(() => {brush.opacity = options.opacity});
   gui.add(options, "density").min(1).max(16).step(1).onChange(() => {brush.density = options.density});
   gui.add(options, "jitter").min(0).max(1024).step(1).onChange(() => {brush.jitter = options.jitter});
+  const guiDynamics = gui.addFolder("Dynamics");
+  guiDynamics.add(options, "smoothing").min(0).max(0.9).onChange(() => {brush.smoothing = options.smoothing});
   const guiEdit = gui.addFolder('Edit');
   guiEdit.add({undo: () => snapshotter.undo()}, "undo");
   guiEdit.add({redo: () => snapshotter.redo()}, "redo");

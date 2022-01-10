@@ -8,4 +8,5 @@ export const defaultOptions = {
   opacity: 1.0,
   density: 8,
   jitter: 0,
+  smoothing: 0.25,
 };
