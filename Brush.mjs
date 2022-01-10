@@ -126,13 +126,13 @@ export class Brush {
     c.strokeStyle = 'white';
     c.lineWidth = 3 / s;
     c.beginPath();
-    c.ellipse(0, 0, 1, this.ratio, 0, 0, Math.PI * 2);
+    c.ellipse(0, 0, 1, this.getRatio(this.state.tiltMagnitude), 0, 0, Math.PI * 2);
     c.stroke();
     
     c.strokeStyle = 'black';
     c.lineWidth = 1 / s;
     c.beginPath();
-    c.ellipse(0, 0, 1, this.ratio, 0, 0, Math.PI * 2);
+    c.ellipse(0, 0, 1, this.getRatio(this.state.tiltMagnitude), 0, 0, Math.PI * 2);
     c.stroke();
     
     c.restore();
