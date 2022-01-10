@@ -49,14 +49,14 @@ const main = () => {
   guiEdit.add({clear}, "clear");
   guiEdit.add({exportImage}, "exportImage");
 
-  const eventPos = (event) => ({
-    x: (event.pageX - canvas.offsetLeft) *
-      window.devicePixelRatio *
-      options.resolutionScale,
-    y: (event.pageY - canvas.offsetTop) *
-      window.devicePixelRatio *
-      options.resolutionScale,
-  });
+  const eventPos = (event) => {
+    const bounds = display.getBoundingClientRect();
+    const ratio = display.width / bounds.width;
+    return {
+      x: (event.clientX - bounds.left) * ratio * options.resolutionScale,
+      y: (event.clientY - bounds.top) * ratio * options.resolutionScale,
+    };
+  };
 
   const eventTilt = (event) => ({
     tiltAngle: Math.atan2(event.tiltY, event.tiltX) + Math.PI * 0.5,
