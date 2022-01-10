@@ -54,6 +54,11 @@ const main = () => {
       options.resolutionScale,
   });
 
+  const eventTilt = (event) => ({
+    tiltAngle: Math.atan2(event.tiltY, event.tiltX) + Math.PI * 0.5,
+    tiltMagnitude: Math.sqrt(event.tiltX ** 2 + event.tiltY ** 2),
+  });
+
   let dragging = false;
   let latestPos = {x: 0, y: 0};
 
@@ -69,7 +74,7 @@ const main = () => {
     );
     brush.drawCursor({
       context: displayContext, 
-      ...latestPos
+      ...latestPos,
     });
     displayContext.restore();
   };
@@ -99,6 +104,7 @@ const main = () => {
     dragging = true;
     brush.moveTo({
       ...eventPos(event), 
+      ...eventTilt(event),
       pressure: event.pressure
     });
     snapshotter.save();
@@ -111,23 +117,26 @@ const main = () => {
     dragging = false;
   };
 
-  const onPointerRawUpdate = (event) => {
+  const onPointerUpdate = (event) => {
     latestPos = eventPos(event);
+
     if (dragging) {
       for (const e of event.getCoalescedEvents()) {
         brush.strokeTo({
           context: bufferContext, 
           ...eventPos(e), 
-          pressure: event.pressure
+          ...eventTilt(e),
+          pressure: event.pressure,
         });
       }
       brush.strokeTo({
         context: bufferContext, 
-        ...eventPos(event), 
-        pressure: event.pressure
+        ...eventPos(event),
+        ...eventTilt(event), 
+        pressure: event.pressure,
       });
-      event.preventDefault();
     }
+    event.preventDefault();
 
     if (options.lowLatency) {
       updateDisplay();

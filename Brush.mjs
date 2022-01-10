@@ -12,6 +12,8 @@ export class Brush {
       x: 0,
       y: 0,
       pressure: 0.5,
+      tiltAngle: 0,
+      tiltMagnitude: 0,
     };
 
     this.color = options.color;
@@ -48,9 +50,17 @@ export class Brush {
     this._noise = noise;
     this._updateStampTexture();
   }
+
+  get ratio() {
+    return 1 / (1 + this.state.tiltMagnitude * 0.1);
+  }
+
+  get angle() {
+    return this.state.tiltAngle;
+  }
   
   get stampSpacing() {
-    return this.size / this.density * Math.max(0.1, this.state.pressure);
+    return this.size / this.density * Math.max(0.1, this.state.pressure) * this.ratio;
   }
 
   _expandedTextureSize(size) {
@@ -93,7 +103,8 @@ export class Brush {
       c.translate(Math.cos(angle) * length, Math.sin(angle) * length);
     }
     const realSize = this._expandedTextureSize(size);
-    c.scale(realSize, realSize);
+    c.rotate(this.angle);
+    c.scale(realSize, realSize * this.ratio);
     c.rotate(Math.random() * Math.PI * 2);
 
     this._updateColorizedTexture(color);
@@ -108,30 +119,34 @@ export class Brush {
 
     const s = Math.max(4, this.size * 0.5 * this.state.pressure);
 
+    c.translate(x, y);
+    c.scale(s, s);
+    c.rotate(this.angle);
+
     c.strokeStyle = 'white';
-    c.lineWidth = 3;
+    c.lineWidth = 3 / s;
     c.beginPath();
-    c.ellipse(x, y, s, s, 0, 0, Math.PI * 2);
+    c.ellipse(0, 0, 1, this.ratio, 0, 0, Math.PI * 2);
     c.stroke();
     
     c.strokeStyle = 'black';
-    c.lineWidth = 1;
+    c.lineWidth = 1 / s;
     c.beginPath();
-    c.ellipse(x, y, s, s, 0, 0, Math.PI * 2);
+    c.ellipse(0, 0, 1, this.ratio, 0, 0, Math.PI * 2);
     c.stroke();
     
     c.restore();
   }
 
-  moveTo({x, y, pressure}) {
-    this.state = {x, y, pressure};
+  moveTo({x, y, pressure, tiltAngle, tiltMagnitude}) {
+    this.state = {x, y, pressure, tiltAngle, tiltMagnitude};
     this.lastStamp = {x, y};
     this.travel = 0;
   }
 
-  strokeTo({context, x, y, pressure}) {
+  strokeTo({context, x, y, pressure, tiltAngle, tiltMagnitude}) {
     const lastState = this.state;
-    this.state = {x, y, pressure};
+    this.state = {x, y, pressure, tiltAngle, tiltMagnitude};
 
     const dx = x - lastState.x;
     const dy = y - lastState.y;
