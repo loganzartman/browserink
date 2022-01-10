@@ -145,7 +145,7 @@ const main = () => {
   window.addEventListener("keydown", onKeyDown, false);
   window.addEventListener("pointerdown", onPointerDown, false);
   window.addEventListener("pointerup", onPointerUp, false);
-  window.addEventListener("pointerrawupdate", onPointerRawUpdate, false);
+  window.addEventListener("pointermove", onPointerUpdate, false);
 };
 
 window.addEventListener("load", () => main(), false);
