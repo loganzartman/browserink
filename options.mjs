@@ -1,5 +1,4 @@
 export const defaultOptions = {
-  lowLatency: true,
   resolutionScale: 1.0,
   color: 'rgb(0,0,0)',
   size: 32,

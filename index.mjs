@@ -6,6 +6,7 @@ import { Snapshotter } from "./Snapshotter.mjs";
 const main = () => {
   let dragging = false;
   let latestPos = {x: 0, y: 0};
+  const idleQueue = [];
 
   const brush = new Brush();
   const display = document.getElementById("canvas");
@@ -57,7 +58,6 @@ const main = () => {
 
   const gui = new dat.GUI();
   gui.remember(options);
-  gui.add(options, "lowLatency");
   gui.add(options, 'resolutionScale').min(0.1).max(2.0).step(0.1).onFinishChange(() => resize());
   gui.addColor(options, "color").onChange(() => {brush.color = options.color});
   gui.add(options, "size").min(1).max(1024).onFinishChange(() => {brush.size = options.size});
@@ -113,11 +113,13 @@ const main = () => {
       return;
     }
     dragging = true;
-    brush.moveTo({
-      ...eventPos(event), 
-      ...eventTilt(event),
-      pressure: event.pressure
-    });
+    idleQueue.push(() =>
+      brush.moveTo({
+        ...eventPos(event),
+        ...eventTilt(event),
+        pressure: event.pressure,
+      })
+    );
     snapshotter.save();
   };
 
@@ -134,32 +136,43 @@ const main = () => {
     if (dragging) {
       if (event.getCoalescedEvents) {
         for (const e of event.getCoalescedEvents()) {
-          brush.strokeTo({
-            context: bufferContext,
-            ...eventPos(e),
-            ...eventTilt(e),
-            pressure: event.pressure,
-          });
+          idleQueue.push(() =>
+            brush.strokeTo({
+              context: bufferContext,
+              ...eventPos(e),
+              ...eventTilt(e),
+              pressure: event.pressure,
+            })
+          );
         }
       }
-      brush.strokeTo({
-        context: bufferContext, 
-        ...eventPos(event),
-        ...eventTilt(event), 
-        pressure: event.pressure,
-      });
+      idleQueue.push(() =>
+        brush.strokeTo({
+          context: bufferContext,
+          ...eventPos(event),
+          ...eventTilt(event),
+          pressure: event.pressure,
+        })
+      );
     }
     event.preventDefault();
-
-    if (options.lowLatency) {
-      updateDisplay();
-    }
   };
 
-  requestAnimationFrame(function af() {
-    if (!options.lowLatency) {
-      updateDisplay();
+  requestIdleCallback(function ic(deadline) {
+    let sum = 0;
+    let count = 0;
+    const estTime = () => (count > 0 ? sum / count : 0);
+    while (idleQueue.length && estTime() < deadline.timeRemaining()) {
+      ++count;
+      const start = Date.now();
+      idleQueue.shift()();
+      sum += Date.now() - start;
     }
+    requestIdleCallback(ic);
+  });
+
+  requestAnimationFrame(function af() {
+    updateDisplay();
     requestAnimationFrame(af);
   });
 
