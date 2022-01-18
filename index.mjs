@@ -1,3 +1,4 @@
+import "./requestIdleCallback.mjs";
 import { Brush } from "./Brush.mjs";
 import dat from "./dat.gui.module.js";
 import { defaultOptions as options } from "./options.mjs";
