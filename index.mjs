@@ -7,7 +7,6 @@ import { Snapshotter } from "./Snapshotter.mjs";
 const main = () => {
   let dragging = false;
   let latestPos = {x: 0, y: 0};
-  const idleQueue = [];
 
   const brush = new Brush();
   const display = document.getElementById("canvas");
@@ -39,6 +38,14 @@ const main = () => {
     displayContext.restore();
   };
 
+  const undo = () => {
+    snapshotter.undo();
+    updateDisplay();
+  };
+  const redo = () => {
+    snapshotter.redo();
+    updateDisplay();
+  };
   const clear = () => {
     bufferContext.fillStyle = 'white';
     bufferContext.fillRect(0, 0, buffer.width, buffer.height);
@@ -72,8 +79,8 @@ const main = () => {
   guiDynamics.add(options, "pressureFactor").min(0).max(1).onChange(() => {brush.pressureFactor = options.pressureFactor});
   guiDynamics.add(options, "tiltFactor").min(0).max(1).onChange(() => {brush.tiltFactor = options.tiltFactor});
   const guiEdit = gui.addFolder('Edit');
-  guiEdit.add({undo: () => snapshotter.undo()}, "undo");
-  guiEdit.add({redo: () => snapshotter.redo()}, "redo");
+  guiEdit.add({undo}, "undo");
+  guiEdit.add({redo}, "redo");
   guiEdit.add({clear}, "clear");
   guiEdit.add({exportImage}, "exportImage");
 
@@ -93,18 +100,15 @@ const main = () => {
 
   const onKeyDown = (event) => {
     if (event.ctrlKey && event.key === 'z') {
-      snapshotter.undo();
-      updateDisplay();
+      undo();
       event.preventDefault();
     }
     if (event.ctrlKey && event.key === 'y') {
-      snapshotter.redo();
-      updateDisplay();
+      redo();
       event.preventDefault();
     }
     if (event.ctrlKey && event.key === 'Z') {
-      snapshotter.redo();
-      updateDisplay();
+      redo();
       event.preventDefault();
     }
   };
@@ -114,13 +118,11 @@ const main = () => {
       return;
     }
     dragging = true;
-    idleQueue.push(() =>
-      brush.moveTo({
-        ...eventPos(event),
-        ...eventTilt(event),
-        pressure: event.pressure,
-      })
-    );
+    brush.moveTo({
+      ...eventPos(event),
+      ...eventTilt(event),
+      pressure: event.pressure,
+    })
     snapshotter.save();
   };
 
@@ -137,44 +139,28 @@ const main = () => {
     if (dragging) {
       if (event.getCoalescedEvents) {
         for (const e of event.getCoalescedEvents()) {
-          idleQueue.push(() =>
-            brush.strokeTo({
-              context: bufferContext,
-              ...eventPos(e),
-              ...eventTilt(e),
-              pressure: event.pressure,
-            })
-          );
+          brush.strokeTo({
+            context: bufferContext,
+            ...eventPos(e),
+            ...eventTilt(e),
+            pressure: event.pressure,
+          })
         }
       }
-      idleQueue.push(() =>
-        brush.strokeTo({
-          context: bufferContext,
-          ...eventPos(event),
-          ...eventTilt(event),
-          pressure: event.pressure,
-        })
-      );
+      brush.strokeTo({
+        context: bufferContext,
+        ...eventPos(event),
+        ...eventTilt(event),
+        pressure: event.pressure,
+      })
     }
     event.preventDefault();
+    updateDisplay();
   };
 
-  requestIdleCallback(function ic(deadline) {
-    let sum = 0;
-    let count = 0;
-    const estTime = () => (count > 0 ? sum / count : 0);
-    while (idleQueue.length && estTime() < deadline.timeRemaining()) {
-      ++count;
-      const start = Date.now();
-      idleQueue.shift()();
-      sum += Date.now() - start;
-    }
-    requestIdleCallback(ic);
-  });
-
   requestAnimationFrame(function af() {
-    updateDisplay();
     requestAnimationFrame(af);
+    updateDisplay();
   });
 
   window.addEventListener("resize", () => resize(), false);
