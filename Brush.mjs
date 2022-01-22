@@ -55,6 +55,7 @@ const stampVertSrc = glsl`
 const stampFragSrc = glsl`
   #version 300 es
   precision highp float;
+  uniform vec4 brushColor;
 
   in vec2 offset;
 
@@ -67,7 +68,7 @@ const stampFragSrc = glsl`
   void main() {
     float f = max(0.0, 1.0 - length(offset));
     f = easeInCubic(f);
-    color = vec4(0.0, 0.0, 0.0, f);
+    color = vec4(1.0, 1.0, 1.0, f) * brushColor;
   }
 `;
 
@@ -310,6 +311,13 @@ export class Brush {
       gl.getUniformLocation(this._stampProgram, 'resolution'), 
       canvas.width,
       canvas.height
+    );
+    gl.uniform4f(
+      gl.getUniformLocation(this._stampProgram, 'brushColor'), 
+      this.color[0] / 255,
+      this.color[1] / 255,
+      this.color[2] / 255,
+      this.opacity,
     );
     gl.bindVertexArray(this._stampVao);
 
