@@ -8,20 +8,26 @@ const main = () => {
   let dragging = false;
   let latestPos = {x: 0, y: 0};
 
-  const brush = new Brush();
   const display = document.getElementById("canvas");
   const buffer = document.createElement("canvas");
   const displayContext = display.getContext("2d", {
     alpha: false,
     desynchronized: true,
   });
-  const bufferContext = buffer.getContext("2d", {
+  const bufferGl = buffer.getContext("webgl2", {
     alpha: true,
-    desynchronized: true,
   });
+  if (!bufferGl) {
+    document.body.innerHTML = 'WebGL2 not supported.';
+    return;
+  }
+  const brush = new Brush({canvas: buffer, gl: bufferGl});
   const snapshotter = new Snapshotter(buffer);
 
   const updateDisplay = () => {
+    bufferGl.viewport(0, 0, buffer.width, buffer.height);
+    brush.drawStamps();
+
     displayContext.clearRect(0, 0, display.width, display.height);
     displayContext.imageSmoothingEnabled = false;
     displayContext.drawImage(buffer, 0, 0, display.width, display.height);
@@ -47,8 +53,8 @@ const main = () => {
     updateDisplay();
   };
   const clear = () => {
-    bufferContext.fillStyle = 'white';
-    bufferContext.fillRect(0, 0, buffer.width, buffer.height);
+    bufferGl.clearColor(1, 1, 1, 1);
+    bufferGl.clear(bufferGl.COLOR_BUFFER_BIT);
     updateDisplay();
   };
   const exportImage = async () => {
@@ -140,7 +146,6 @@ const main = () => {
       if (event.getCoalescedEvents) {
         for (const e of event.getCoalescedEvents()) {
           brush.strokeTo({
-            context: bufferContext,
             ...eventPos(e),
             ...eventTilt(e),
             pressure: event.pressure,
@@ -148,7 +153,6 @@ const main = () => {
         }
       }
       brush.strokeTo({
-        context: bufferContext,
         ...eventPos(event),
         ...eventTilt(event),
         pressure: event.pressure,

@@ -2,8 +2,68 @@ import { lerp } from "./lerp.mjs";
 import { defaultOptions as options } from "./options.mjs";
 import { drawGradient } from "./drawGradient.mjs";
 
+const glsl = (strings, ...variables) => {
+  const joined = strings
+    .map((s, i) => s + (variables[i] ?? ''))
+    .join('')
+    .replace(/^[\n\r]+/, '');
+  const indent = joined.match(/^(\s*)(\S|$)/)[1];
+  return joined.replace(new RegExp(`^${indent}`, 'gm'), '');
+};
+
+const compileShader = (gl, shaderType, shaderSrc) => {
+  const shader = gl.createShader(shaderType);
+  gl.shaderSource(shader, shaderSrc);
+  gl.compileShader(shader);
+ 
+  const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+  if (!success) {
+    throw new Error(`Failed to compile shader: ${gl.getShaderInfoLog(shader)}`);
+  }
+  return shader;
+}
+
+const checkProgram = (gl, name, program) => {
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    const info = gl.getProgramInfoLog(program);
+    throw new Error(`Could not compile WebGL program '${name}'. \n\n${info}`);
+  }
+};
+
+const stampVertSrc = glsl`
+  #version 300 es
+  uniform vec2 resolution;
+
+  in vec2 vertexOffset;
+  in vec2 pos;
+  in float size;
+
+  void main() {
+    vec2 vertexPos = pos + vertexOffset * size;
+
+    gl_Position = vec4(
+      (vertexPos / resolution - vec2(0.5)) * vec2(1.0, -1.0) * 2.0,
+      0.0,
+      1.0
+    );
+  }
+`;
+
+const stampFragSrc = glsl`
+  #version 300 es
+  precision highp float;
+
+  out vec4 color;
+
+  void main() {
+    color = vec4(1.0, 0.0, 1.0, 1.0);
+  }
+`;
+
 export class Brush {
-  constructor() {
+  constructor({canvas, gl}) {
+    this.canvas = canvas;
+    this.gl = gl;
     this._stampTexture = document.createElement('canvas');
     this._colorizedTexture = document.createElement('canvas');
     this._colorizedColor = null;
@@ -29,6 +89,20 @@ export class Brush {
     this.tiltFactor = options.tiltFactor;
 
     this._updateStampTexture();
+
+    this._stampVao = null;
+
+    this._stampVertexOffsetVbo = null;
+    this._stampPosVbo = null;
+    this._stampSizeVbo = null;
+
+    this._stampPosData = null;
+    this._stampSizeData = null;
+
+    this._stampMaxCount = 0;
+    this._stampIndex = 0;
+
+    this._initGl();
   }
 
   get size() {
@@ -102,7 +176,99 @@ export class Brush {
     c.drawImage(this._stampTexture, 0, 0);
   }
 
-  _stamp({context: c, x, y, size, angle, ratio, color}) {
+  _initGl() {
+    const {gl} = this;
+
+    const stampVs = compileShader(gl, gl.VERTEX_SHADER, stampVertSrc);
+    const stampFs = compileShader(gl, gl.FRAGMENT_SHADER, stampFragSrc);
+
+    this._stampProgram = gl.createProgram();
+    gl.attachShader(this._stampProgram, stampVs);
+    gl.attachShader(this._stampProgram, stampFs);
+    gl.linkProgram(this._stampProgram);
+    checkProgram(gl, 'stampProgram', this._stampProgram);
+
+    this._stampVao = gl.createVertexArray();
+    gl.bindVertexArray(this._stampVao);
+
+    gl.enableVertexAttribArray(0);
+    this._stampVertexOffsetVbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._stampVertexOffsetVbo);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(0, 0);
+    const stampVertexOffsetData = new Float32Array([
+      -0.5, -0.5,
+      0.5, -0.5,
+      0.5, 0.5,
+      -0.5, 0.5,
+    ]);
+    gl.bufferData(this.gl.ARRAY_BUFFER, stampVertexOffsetData, gl.DYNAMIC_DRAW);
+
+    gl.enableVertexAttribArray(1);
+    this._stampPosVbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._stampPosVbo);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(1, 1);
+
+    gl.enableVertexAttribArray(2);
+    this._stampSizeVbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._stampSizeVbo);
+    gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(2, 1);
+
+    gl.bindVertexArray(null);
+  }
+
+  _expandBuffers() {
+    const {gl} = this;
+
+    if (this._stampIndex < this._stampMaxCount) {
+      return;
+    }
+    this._stampMaxCount = Math.max(16, Math.ceil(this._stampMaxCount * 2));
+    console.log(`expanded buffers to ${this._stampMaxCount} items`);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._stampPosVbo)
+    const stampPosData = new Float32Array(this._stampMaxCount * 2);
+    if (this._stampPosData) {
+      stampPosData.set(this._stampPosData);
+    }
+    this._stampPosData = stampPosData;
+    gl.bufferData(gl.ARRAY_BUFFER, this._stampPosData, gl.DYNAMIC_DRAW);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._stampSizeVbo)
+    const stampSizeData = new Float32Array(this._stampMaxCount);
+    if (this._stampSizeData) {
+      stampSizeData.set(this._stampSizeData);
+    }
+    this._stampSizeData = stampSizeData;
+    gl.bufferData(gl.ARRAY_BUFFER, this._stampSizeData, gl.DYNAMIC_DRAW);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  }
+  
+  _uploadBufferData() {
+    const {gl} = this;
+
+    this._expandBuffers();
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._stampPosVbo);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this._stampPosData);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._stampSizeVbo);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this._stampSizeData);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);    
+  }
+
+  _stamp({x, y, size, angle, ratio, color}) {
+    this._expandBuffers();
+    this._stampPosData[this._stampIndex * 2 + 0] = x;
+    this._stampPosData[this._stampIndex * 2 + 1] = y;
+    this._stampSizeData[this._stampIndex] = size;
+    ++this._stampIndex;
+
+    /*
     c.save();
     c.translate(x, y);
     if (this.jitter) {
@@ -120,6 +286,28 @@ export class Brush {
     c.drawImage(this._colorizedTexture, -0.5, -0.5, 1, 1);
 
     c.restore();
+    */
+  }
+
+  drawStamps() {
+    const {canvas, gl} = this; 
+
+    this._uploadBufferData();
+
+    gl.useProgram(this._stampProgram);
+    gl.uniform2f(
+      gl.getUniformLocation(this._stampProgram, 'resolution'), 
+      canvas.width,
+      canvas.height
+    );
+    gl.bindVertexArray(this._stampVao);
+
+    gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, this._stampIndex);
+
+    gl.bindVertexArray(null);
+    gl.useProgram(null);
+
+    this._stampIndex = 0;
   }
 
   drawCursor({context: c, x, y}) {
