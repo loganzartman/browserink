@@ -38,9 +38,12 @@ const stampVertSrc = glsl`
   in vec2 pos;
   in float size;
 
+  out vec2 offset;
+
   void main() {
     vec2 vertexPos = pos + vertexOffset * size;
 
+    offset = vertexOffset * 2.0;
     gl_Position = vec4(
       (vertexPos / resolution - vec2(0.5)) * vec2(1.0, -1.0) * 2.0,
       0.0,
@@ -53,10 +56,18 @@ const stampFragSrc = glsl`
   #version 300 es
   precision highp float;
 
+  in vec2 offset;
+
   out vec4 color;
 
+  float easeInCubic(float f) {
+    return f * f * f;
+  }
+
   void main() {
-    color = vec4(1.0, 0.0, 1.0, 1.0);
+    float f = max(0.0, 1.0 - length(offset));
+    f = easeInCubic(f);
+    color = vec4(0.0, 0.0, 0.0, f);
   }
 `;
 
@@ -265,7 +276,7 @@ export class Brush {
     this._expandBuffers();
     this._stampPosData[this._stampIndex * 2 + 0] = x;
     this._stampPosData[this._stampIndex * 2 + 1] = y;
-    this._stampSizeData[this._stampIndex] = size;
+    this._stampSizeData[this._stampIndex] = this._expandedTextureSize(size);
     ++this._stampIndex;
 
     /*
@@ -302,6 +313,8 @@ export class Brush {
     );
     gl.bindVertexArray(this._stampVao);
 
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, this._stampIndex);
 
     gl.bindVertexArray(null);
