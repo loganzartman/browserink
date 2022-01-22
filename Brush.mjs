@@ -38,11 +38,13 @@ const stampVertSrc = glsl`
   in vec2 pos;
   in float size;
 
+  flat out int instanceId;
   out vec2 offset;
 
   void main() {
     vec2 vertexPos = pos + vertexOffset * size;
 
+    instanceId = gl_InstanceID;
     offset = vertexOffset * 2.0;
     gl_Position = vec4(
       (vertexPos / resolution - vec2(0.5)) * vec2(1.0, -1.0) * 2.0,
@@ -56,9 +58,12 @@ const stampFragSrc = glsl`
   #version 300 es
   precision highp float;
 
+  uniform int monotonic;
   uniform float brushHardness;
+  uniform float brushNoise;
   uniform vec4 brushColor;
 
+  flat in int instanceId;
   in vec2 offset;
 
   out vec4 color;
@@ -67,10 +72,23 @@ const stampFragSrc = glsl`
     return f * f * f;
   }
 
+  const uint k = 1103515245U;
+  vec3 hash(uvec3 x) {
+    x = ((x>>8U)^x.yzx)*k;
+    x = ((x>>8U)^x.yzx)*k;
+    x = ((x>>8U)^x.yzx)*k;
+    
+    return vec3(x)*(1.0/float(0xffffffffU));
+  }
+
   void main() {
     float softness = clamp(1.0 - brushHardness, 0.001, 1.0);
+    float random = hash(uvec3(gl_FragCoord.xy, monotonic + instanceId)).x;
+
     float f = (1.0 / softness) - (length(offset) / softness);
+    f = f * (1.0 - brushNoise) + f * random * brushNoise;
     f = easeInCubic(clamp(f, 0.0, 1.0));
+
     color = vec4(1.0, 1.0, 1.0, f) * brushColor;
   }
 `;
@@ -104,6 +122,8 @@ export class Brush {
     this.tiltFactor = options.tiltFactor;
 
     this._updateStampTexture();
+
+    this._monotonic = 0;
 
     this._stampVao = null;
 
@@ -310,6 +330,10 @@ export class Brush {
     this._uploadBufferData();
 
     gl.useProgram(this._stampProgram);
+    gl.uniform1i(
+      gl.getUniformLocation(this._stampProgram, 'monotonic'), 
+      ++this._monotonic,
+    );
     gl.uniform2f(
       gl.getUniformLocation(this._stampProgram, 'resolution'), 
       canvas.width,
@@ -318,6 +342,10 @@ export class Brush {
     gl.uniform1f(
       gl.getUniformLocation(this._stampProgram, 'brushHardness'), 
       this.hardness,
+    );
+    gl.uniform1f(
+      gl.getUniformLocation(this._stampProgram, 'brushNoise'), 
+      this.noise,
     );
     gl.uniform4f(
       gl.getUniformLocation(this._stampProgram, 'brushColor'), 
