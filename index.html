@@ -9,7 +9,8 @@
         height: 100%;
         overscroll-behavior: none;
       }
-      #canvas {
+      .display {
+        position: absolute;
         width: 100%;
         height: 100%;
         touch-action: none;
@@ -20,6 +21,7 @@
     </style>
   </head>
   <body>
-    <canvas id="canvas"></canvas>
+    <canvas id="image-canvas" class="display"></canvas>
+    <canvas id="ui-canvas" class="display"></canvas>
   </body>
 </html>

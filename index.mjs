@@ -3,35 +3,39 @@ import { Brush } from "./Brush.mjs";
 import dat from "./dat.gui.module.js";
 import { defaultOptions as options } from "./options.mjs";
 import { Snapshotter } from "./Snapshotter.mjs";
+import { RenderTexture } from "./RenderTexture.mjs";
+import { TextureQuad } from "./Quad.mjs";
 
 const main = () => {
   let dragging = false;
   let latestPos = {x: 0, y: 0};
 
-  const display = document.getElementById("canvas");
-  const buffer = document.createElement("canvas");
-  const displayContext = display.getContext("2d", {
-    alpha: false,
-    desynchronized: true,
-  });
+  const buffer = document.getElementById("image-canvas");
+  const display = document.getElementById("ui-canvas");
   const bufferGl = buffer.getContext("webgl2", {
+    alpha: true,
+  });
+  const displayContext = display.getContext("2d", {
     alpha: true,
   });
   if (!bufferGl) {
     document.body.innerHTML = 'WebGL2 not supported.';
     return;
   }
-  const brush = new Brush({canvas: buffer, gl: bufferGl});
+  const imageTexture = new RenderTexture({gl: bufferGl});
+  const textureQuad = new TextureQuad({gl: bufferGl});
+  const brush = new Brush({canvas: buffer, gl: bufferGl, imageTexture});
   const snapshotter = new Snapshotter(buffer);
 
   const updateDisplay = () => {
     bufferGl.viewport(0, 0, buffer.width, buffer.height);
     brush.drawStamps();
 
-    displayContext.clearRect(0, 0, display.width, display.height);
-    displayContext.imageSmoothingEnabled = false;
-    displayContext.drawImage(buffer, 0, 0, display.width, display.height);
+    bufferGl.clearColor(1, 1, 1, 1);
+    bufferGl.clear(bufferGl.COLOR_BUFFER_BIT);
+    textureQuad.draw(imageTexture.texture);
 
+    displayContext.clearRect(0, 0, display.width, display.height);
     displayContext.save();
     displayContext.scale(
       display.width / buffer.width, 
@@ -53,8 +57,10 @@ const main = () => {
     updateDisplay();
   };
   const clear = () => {
+    imageTexture.bindFramebuffer();
     bufferGl.clearColor(1, 1, 1, 1);
     bufferGl.clear(bufferGl.COLOR_BUFFER_BIT);
+    imageTexture.unbindFramebuffer();
     updateDisplay();
   };
   const exportImage = async () => {
@@ -62,10 +68,13 @@ const main = () => {
     window.open(URL.createObjectURL(blob), "_blank");
   };
   const resize = () => {
-    display.width = window.innerWidth * window.devicePixelRatio;
-    display.height = window.innerHeight * window.devicePixelRatio;
-    buffer.width = window.innerWidth * window.devicePixelRatio * options.resolutionScale;
-    buffer.height = window.innerHeight * window.devicePixelRatio * options.resolutionScale;
+    const width = Math.floor(window.innerWidth * window.devicePixelRatio);
+    const height = Math.floor(window.innerHeight * window.devicePixelRatio);
+    display.width = width;
+    display.height = height;
+    buffer.width = width * options.resolutionScale;
+    buffer.height = height * options.resolutionScale;
+    imageTexture.resize(width, height);
     clear();
   };
   resize();

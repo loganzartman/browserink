@@ -1,34 +1,7 @@
 import { lerp } from "./lerp.mjs";
 import { defaultOptions as options } from "./options.mjs";
 import { drawGradient } from "./drawGradient.mjs";
-
-const glsl = (strings, ...variables) => {
-  const joined = strings
-    .map((s, i) => s + (variables[i] ?? ''))
-    .join('')
-    .replace(/^[\n\r]+/, '');
-  const indent = joined.match(/^(\s*)(\S|$)/)[1];
-  return joined.replace(new RegExp(`^${indent}`, 'gm'), '');
-};
-
-const compileShader = (gl, shaderType, shaderSrc) => {
-  const shader = gl.createShader(shaderType);
-  gl.shaderSource(shader, shaderSrc);
-  gl.compileShader(shader);
- 
-  const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-  if (!success) {
-    throw new Error(`Failed to compile shader: ${gl.getShaderInfoLog(shader)}`);
-  }
-  return shader;
-}
-
-const checkProgram = (gl, name, program) => {
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    const info = gl.getProgramInfoLog(program);
-    throw new Error(`Could not compile WebGL program '${name}'. \n\n${info}`);
-  }
-};
+import { glsl, compileShader, checkProgram } from "./gfx.mjs";
 
 const stampVertSrc = glsl`
   #version 300 es
@@ -94,9 +67,10 @@ const stampFragSrc = glsl`
 `;
 
 export class Brush {
-  constructor({canvas, gl}) {
+  constructor({canvas, gl, imageTexture}) {
     this.canvas = canvas;
     this.gl = gl;
+    this.imageTexture = imageTexture;
     this._stampTexture = document.createElement('canvas');
     this._colorizedTexture = document.createElement('canvas');
     this._colorizedColor = null;
@@ -237,7 +211,7 @@ export class Brush {
       0.5, 0.5,
       -0.5, 0.5,
     ]);
-    gl.bufferData(this.gl.ARRAY_BUFFER, stampVertexOffsetData, gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, stampVertexOffsetData, gl.STATIC_DRAW);
 
     gl.enableVertexAttribArray(1);
     this._stampPosVbo = gl.createBuffer();
@@ -325,7 +299,7 @@ export class Brush {
   }
 
   drawStamps() {
-    const {canvas, gl} = this; 
+    const {imageTexture, gl} = this; 
 
     this._uploadBufferData();
 
@@ -336,8 +310,8 @@ export class Brush {
     );
     gl.uniform2f(
       gl.getUniformLocation(this._stampProgram, 'resolution'), 
-      canvas.width,
-      canvas.height
+      imageTexture.width,
+      imageTexture.height
     );
     gl.uniform1f(
       gl.getUniformLocation(this._stampProgram, 'brushHardness'), 
@@ -356,12 +330,15 @@ export class Brush {
     );
     gl.bindVertexArray(this._stampVao);
 
+    imageTexture.bindFramebuffer();
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE_MINUS_DST_ALPHA, gl.ONE);
+
     gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, this._stampIndex);
 
     gl.bindVertexArray(null);
     gl.useProgram(null);
+    imageTexture.unbindFramebuffer();
 
     this._stampIndex = 0;
   }
