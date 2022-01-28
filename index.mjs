@@ -49,11 +49,11 @@ const main = () => {
   };
 
   const undo = () => {
-    snapshotter.undo();
+    // snapshotter.undo();
     updateDisplay();
   };
   const redo = () => {
-    snapshotter.redo();
+    // snapshotter.redo();
     updateDisplay();
   };
   const clear = () => {
@@ -138,7 +138,7 @@ const main = () => {
       ...eventTilt(event),
       pressure: event.pressure,
     })
-    snapshotter.save();
+    // snapshotter.save();
   };
 
   const onPointerUp = (event) => {
