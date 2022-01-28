@@ -1,4 +1,5 @@
 import "./requestIdleCallback.mjs";
+import { WebGLDebugUtils } from "./webgl-debug.mjs";
 import { Brush } from "./Brush.mjs";
 import dat from "./dat.gui.module.js";
 import { defaultOptions as options } from "./options.mjs";
@@ -12,9 +13,11 @@ const main = () => {
 
   const buffer = document.getElementById("image-canvas");
   const display = document.getElementById("ui-canvas");
-  const bufferGl = buffer.getContext("webgl2", {
-    alpha: true,
-  });
+  const bufferGl = WebGLDebugUtils.makeDebugContext(
+    buffer.getContext("webgl2", {
+      alpha: true,
+    })
+  );
   const displayContext = display.getContext("2d", {
     alpha: true,
   });
