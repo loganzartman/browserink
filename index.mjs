@@ -148,6 +148,7 @@ const main = () => {
     dragging = false;
   };
 
+  let readyToUpdate = false;
   const onPointerUpdate = (event) => {
     latestPos = eventPos(event);
 
@@ -168,11 +169,19 @@ const main = () => {
       })
     }
     event.preventDefault();
+
+    if (readyToUpdate) {
+      updateDisplay();
+      readyToUpdate = false;
+    }
   };
 
   requestAnimationFrame(function af() {
     requestAnimationFrame(af);
-    updateDisplay();
+    if (readyToUpdate) {
+      updateDisplay();
+    }
+    readyToUpdate = true;
   });
 
   window.addEventListener("resize", () => resize(), false);
