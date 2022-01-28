@@ -168,7 +168,6 @@ const main = () => {
       })
     }
     event.preventDefault();
-    updateDisplay();
   };
 
   requestAnimationFrame(function af() {
