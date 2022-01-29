@@ -246,10 +246,10 @@ export class Brush {
     );
     gl.uniform4f(
       gl.getUniformLocation(this._stampProgram, 'brushColor'), 
-      this.color[0] / 255,
-      this.color[1] / 255,
-      this.color[2] / 255,
-      this.opacity,
+      this.color.r / 255,
+      this.color.g / 255,
+      this.color.b / 255,
+      this.color.a,
     );
     gl.bindVertexArray(this._stampVao);
 

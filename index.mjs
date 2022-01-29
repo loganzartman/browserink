@@ -1,10 +1,45 @@
 import { WebGLDebugUtils } from "./webgl-debug.mjs";
 import { Brush } from "./Brush.mjs";
-import dat from "./dat.gui.module.js";
+import "./tweakpane-3.0.7.js";
+import "./tweakpane-plugin-essentials-0.1.4.js";
 import { defaultOptions as options } from "./options.mjs";
 import { Snapshotter } from "./Snapshotter.mjs";
 import { RenderTexture } from "./RenderTexture.mjs";
 import { TextureQuad } from "./Quad.mjs";
+
+const setupGui = ({brush, undo, redo, clear}) => {
+  const pane = new Tweakpane.Pane();
+  pane.registerPlugin(TweakpaneEssentialsPlugin);
+
+  const displayPane = pane.addFolder({title: "Display"});
+  displayPane.addInput(options, "resolutionScale", {min: 0.1, max: 2.0, step: 0.1});
+
+  const brushPane = pane.addFolder({title: "Brush"});
+  brushPane.addInput(brush, "color", {picker: "inline", expanded: true});
+  brushPane.addInput(brush, "size", {min: 1.0, max: 1024.0});
+  brushPane.addInput(brush, "hardness", {min: 0.0, max: 1.0});
+  brushPane.addInput(brush, "noise", {min: 0.0, max: 1.0});
+  brushPane.addInput(brush, "density", {min: 1, max: 16, step: 1});
+
+  const dynamicsPane = pane.addFolder({title: "Dynamics"});
+  dynamicsPane.addInput(brush, "smoothing", {min: 0.0, max: 0.9});
+  dynamicsPane.addInput(brush, "pressureFactor", {min: 0.0, max: 1.0});
+  dynamicsPane.addInput(brush, "tiltFactor", {min: 0.0, max: 1.0});
+
+  const editPane = pane.addFolder({title: "Edit"});
+
+  const editCells = [{title: "Undo"}, {title: "Redo"}, {title: "Clear"}];
+  const editActions = [undo, redo, clear];
+  editPane
+    .addBlade({
+      view: "buttongrid",
+      size: [editCells.length, 1],
+      cells: (x, _) => editCells[x],
+    })
+    .on("click", ({index: [x, _]}) => {
+      editActions[x]();
+    });
+};
 
 const main = () => {
   let dragging = false;
@@ -81,25 +116,7 @@ const main = () => {
   };
   resize();
 
-  const gui = new dat.GUI();
-  gui.remember(options);
-  gui.add(options, 'resolutionScale').min(0.1).max(2.0).step(0.1).onFinishChange(() => resize());
-  gui.addColor(options, "color").onChange(() => {brush.color = options.color});
-  gui.add(options, "size").min(1).max(1024).onFinishChange(() => {brush.size = options.size});
-  gui.add(options, "hardness").min(0).max(1).onFinishChange(() => {brush.hardness = options.hardness});
-  gui.add(options, "noise").min(0).max(1).onFinishChange(() => {brush.noise = options.noise});
-  gui.add(options, "opacity").min(0).max(1).step(0.01).onChange(() => {brush.opacity = options.opacity});
-  gui.add(options, "density").min(1).max(16).step(1).onChange(() => {brush.density = options.density});
-  gui.add(options, "jitter").min(0).max(1024).step(1).onChange(() => {brush.jitter = options.jitter});
-  const guiDynamics = gui.addFolder("Dynamics");
-  guiDynamics.add(options, "smoothing").min(0).max(0.9).onChange(() => {brush.smoothing = options.smoothing});
-  guiDynamics.add(options, "pressureFactor").min(0).max(1).onChange(() => {brush.pressureFactor = options.pressureFactor});
-  guiDynamics.add(options, "tiltFactor").min(0).max(1).onChange(() => {brush.tiltFactor = options.tiltFactor});
-  const guiEdit = gui.addFolder('Edit');
-  guiEdit.add({undo}, "undo");
-  guiEdit.add({redo}, "redo");
-  guiEdit.add({clear}, "clear");
-  guiEdit.add({exportImage}, "exportImage");
+  setupGui({brush, undo, redo, clear});
 
   const eventPos = (event) => {
     const bounds = display.getBoundingClientRect();
