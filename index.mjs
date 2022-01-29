@@ -1,4 +1,3 @@
-import "./requestIdleCallback.mjs";
 import { WebGLDebugUtils } from "./webgl-debug.mjs";
 import { Brush } from "./Brush.mjs";
 import dat from "./dat.gui.module.js";
