@@ -25,14 +25,34 @@ const textureFragSrc = glsl`
   precision highp float;
 
   uniform sampler2D tex;
+  uniform bool dither;
 
   in vec2 uv;
 
   out vec4 color;
 
+  const uint k = 1103515245U;
+  vec3 hash(uvec3 x) {
+    x = ((x>>8U)^x.yzx)*k;
+    x = ((x>>8U)^x.yzx)*k;
+    x = ((x>>8U)^x.yzx)*k;
+    
+    return vec3(x)*(1.0/float(0xffffffffU));
+  }
+
+  vec3 ditherNoise() {
+    vec3 random = hash(uvec3(gl_FragCoord.xy, 0)) + hash(uvec3(gl_FragCoord.xy, 1)) - 1.0;
+    return random / 255.0;
+  }
+
   void main() {
-    color = texture(tex, uv);
-    // color = vec4(uv, 0.0, 1.0);
+    if (dither) {
+      vec4 pixel = texture(tex, uv);
+      vec3 random = ditherNoise();
+      color = pixel + random.xyzx;
+    } else {
+      color = texture(tex, uv);
+    }
   }
 `;
 
@@ -55,6 +75,11 @@ export class Quad {
 }
 
 export class TextureQuad extends Quad {
+  constructor({gl, dither=true}) {
+    super({gl});
+    this.dither = dither;
+  }
+
   static program(gl) {
     if (!TextureQuad._program) {
       const vertShader = compileShader(gl, gl.VERTEX_SHADER, textureVertSrc);
@@ -81,6 +106,10 @@ export class TextureQuad extends Quad {
     gl.uniform1i(
       gl.getUniformLocation(program, 'tex'),
       0
+    );
+    gl.uniform1i(
+      gl.getUniformLocation(program, 'dither'),
+      this.dither ? 1 : 0,
     );
     
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);

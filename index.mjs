@@ -7,12 +7,13 @@ import { Snapshotter } from "./Snapshotter.mjs";
 import { RenderTexture } from "./RenderTexture.mjs";
 import { TextureQuad } from "./Quad.mjs";
 
-const setupGui = ({brush, undo, redo, clear}) => {
+const setupGui = ({brush, undo, redo, clear, textureQuad}) => {
   const pane = new Tweakpane.Pane();
   pane.registerPlugin(TweakpaneEssentialsPlugin);
 
   const displayPane = pane.addFolder({title: "Display"});
   displayPane.addInput(options, "resolutionScale", {min: 0.1, max: 2.0, step: 0.1});
+  displayPane.addInput(textureQuad, "dither");
 
   const brushPane = pane.addFolder({title: "Brush"});
   brushPane.addInput(brush, "color", {picker: "inline", expanded: true});
@@ -71,7 +72,7 @@ const main = () => {
     return;
   }
   const imageTexture = new RenderTexture({gl: bufferGl});
-  const textureQuad = new TextureQuad({gl: bufferGl});
+  const textureQuad = new TextureQuad({gl: bufferGl, dither: options.dither});
   const brush = new Brush({canvas: buffer, gl: bufferGl, imageTexture});
   const snapshotter = new Snapshotter(buffer);
 
@@ -127,7 +128,7 @@ const main = () => {
   };
   resize();
 
-  setupGui({brush, undo, redo, clear});
+  setupGui({brush, undo, redo, clear, textureQuad});
 
   const eventPos = (event) => {
     const bounds = display.getBoundingClientRect();
