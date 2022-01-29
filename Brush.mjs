@@ -1,6 +1,5 @@
 import { lerp } from "./lerp.mjs";
 import { defaultOptions as options } from "./options.mjs";
-import { drawGradient } from "./drawGradient.mjs";
 import { glsl, compileShader, checkProgram } from "./gfx.mjs";
 
 const stampVertSrc = glsl`
@@ -71,9 +70,6 @@ export class Brush {
     this.canvas = canvas;
     this.gl = gl;
     this.imageTexture = imageTexture;
-    this._stampTexture = document.createElement('canvas');
-    this._colorizedTexture = document.createElement('canvas');
-    this._colorizedColor = null;
     this.travel = 0; 
     this.state = {
       x: 0,
@@ -84,9 +80,9 @@ export class Brush {
     };
 
     this.color = options.color;
-    this._size = options.size;
-    this._hardness = options.hardness;
-    this._noise = options.noise;
+    this.size = options.size;
+    this.hardness = options.hardness;
+    this.noise = options.noise;
     this.opacity = options.opacity;
     this.density = options.density;
     this.jitter = options.jitter;
@@ -94,8 +90,6 @@ export class Brush {
     this.smoothing = options.smoothing;
     this.pressureFactor = options.pressureFactor;
     this.tiltFactor = options.tiltFactor;
-
-    this._updateStampTexture();
 
     this._monotonic = 0;
 
@@ -112,30 +106,6 @@ export class Brush {
     this._stampIndex = 0;
 
     this._initGl();
-  }
-
-  get size() {
-    return this._size;
-  }
-  set size(size) {
-    this._size = size;
-    this._updateStampTexture();
-  }
-
-  get hardness() {
-    return this._hardness;
-  }
-  set hardness(hardness) {
-    this._hardness = hardness;
-    this._updateStampTexture();
-  }
-
-  get noise() {
-    return this._noise;
-  }
-  set noise(noise) {
-    this._noise = noise;
-    this._updateStampTexture();
   }
 
   getPressure(pressure) {
@@ -156,33 +126,6 @@ export class Brush {
 
   _expandedTextureSize(size) {
     return size + (1 - this.hardness) * size;
-  }
-
-  _updateStampTexture() {
-    const textureSize = Math.ceil(this._expandedTextureSize(this.size));
-    this._stampTexture.width = this._stampTexture.height = textureSize;
-    this._colorizedTexture.width = this._colorizedTexture.height = textureSize;
-    drawGradient({
-      context: this._stampTexture.getContext("2d"),
-      size: textureSize,
-      hardness: this.hardness,
-      noise: this.noise,
-    });
-    this._updateColorizedTexture(this._colorizedColor, true);
-  }
-
-  _updateColorizedTexture(color, forceUpdate=false) {
-    if (!forceUpdate && color === this._colorizedColor) {
-      return;
-    }
-    this._colorizedColor = color;
-    const c = this._colorizedTexture.getContext('2d');
-    const textureSize = this._colorizedTexture.width;
-    c.globalCompositeOperation = 'copy';
-    c.fillStyle = color;
-    c.fillRect(0, 0, textureSize, textureSize);
-    c.globalCompositeOperation = 'destination-in';
-    c.drawImage(this._stampTexture, 0, 0);
   }
 
   _initGl() {
@@ -276,26 +219,6 @@ export class Brush {
     this._stampPosData[this._stampIndex * 2 + 1] = y;
     this._stampSizeData[this._stampIndex] = this._expandedTextureSize(size);
     ++this._stampIndex;
-
-    /*
-    c.save();
-    c.translate(x, y);
-    if (this.jitter) {
-      const length = Math.random() * Math.random() * this.jitter;
-      const angle = Math.random() * Math.PI * 2;
-      c.translate(Math.cos(angle) * length, Math.sin(angle) * length);
-    }
-    const realSize = this._expandedTextureSize(size);
-    c.rotate(angle);
-    c.scale(realSize, realSize * ratio);
-    c.rotate(Math.random() * Math.PI * 2);
-
-    this._updateColorizedTexture(color);
-    c.globalAlpha = this.opacity;
-    c.drawImage(this._colorizedTexture, -0.5, -0.5, 1, 1);
-
-    c.restore();
-    */
   }
 
   drawStamps() {
