@@ -42,7 +42,7 @@ const textureFragSrc = glsl`
 
   vec3 ditherNoise() {
     vec3 random = hash(uvec3(gl_FragCoord.xy, 0)) + hash(uvec3(gl_FragCoord.xy, 1)) - 1.0;
-    return random / 255.0;
+    return random / 255.0 * 2.0;
   }
 
   void main() {
