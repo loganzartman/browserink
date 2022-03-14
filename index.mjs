@@ -1,4 +1,3 @@
-import { WebGLDebugUtils } from "./webgl-debug.mjs";
 import { Brush } from "./Brush.mjs";
 import "./tweakpane-3.0.7.js";
 import "./tweakpane-plugin-essentials-0.1.4.js";
@@ -59,11 +58,9 @@ const main = () => {
 
   const buffer = document.getElementById("image-canvas");
   const display = document.getElementById("ui-canvas");
-  const bufferGl = WebGLDebugUtils.makeDebugContext(
-    buffer.getContext("webgl2", {
-      alpha: true,
-    })
-  );
+  const bufferGl = buffer.getContext("webgl2", {
+    alpha: true,
+  });
   const displayContext = display.getContext("2d", {
     alpha: true,
   });
