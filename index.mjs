@@ -20,17 +20,6 @@ const setupGui = ({brush, undo, redo, clear, textureQuad}) => {
   brushPane.addInput(brush, "hardness", {min: 0.0, max: 1.0});
   brushPane.addInput(brush, "noise", {min: 0.0, max: 1.0});
   brushPane.addInput(brush, "density", {min: 1, max: 16, step: 1});
-  brushPane
-    .addBlade({
-      view: "cubicbezier",
-      value: options.curve,
-      expanded: false,
-      label: "curve",
-      picker: "inline",
-    })
-    .on("change", ({value}) => {
-      brush.curve = [value.x1, value.y1, value.x2, value.y2]
-    });
 
   const dynamicsPane = pane.addFolder({title: "Dynamics"});
   dynamicsPane.addInput(brush, "smoothing", {min: 0.0, max: 0.9});

@@ -34,31 +34,11 @@ const stampFragSrc = glsl`
   uniform float brushHardness;
   uniform float brushNoise;
   uniform vec4 brushColor;
-  uniform vec4 brushCurve;
 
   flat in int instanceId;
   in vec2 offset;
 
   out vec4 color;
-
-  float easeCubicBezier(float f, vec4 control) {
-    vec2 c1 = control.xy;
-    vec2 c2 = vec2(1, 1) - control.wz;
-    vec2 center = mix(c1, c2, f);
-    return mix(
-      mix(
-        mix(vec2(0, 0), c1, f),
-        center,
-        f
-      ),
-      mix(
-        center,
-        mix(c2, vec2(1, 1), f),
-        f
-      ),
-      f
-    ).y;
-  }
 
   const uint k = 1103515245U;
   vec3 hash(uvec3 x) {
@@ -73,10 +53,9 @@ const stampFragSrc = glsl`
     float softness = clamp(1.0 - brushHardness, 0.001, 1.0);
     float random = hash(uvec3(gl_FragCoord.xy, monotonic + instanceId)).x;
 
-    float f = (1.0 / softness) - (length(offset) / softness);
+    float f = clamp((1.0 - length(offset)) / softness, 0.0, 1.0);
+    f = pow(f, 3.0);
     f = f * (1.0 - brushNoise) + f * random * brushNoise;
-    f = clamp(f, 0.0, 1.0);
-    f = easeCubicBezier(f, brushCurve);
     f = clamp(f, 0.0, 1.0);
 
     color = vec4(1.0, 1.0, 1.0, f) * brushColor;
@@ -269,10 +248,6 @@ export class Brush {
       this.color.g / 255,
       this.color.b / 255,
       this.color.a,
-    );
-    gl.uniform4fv(
-      gl.getUniformLocation(this._stampProgram, 'brushCurve'), 
-      this.curve,
     );
     gl.bindVertexArray(this._stampVao);
 
