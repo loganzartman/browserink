@@ -2,9 +2,10 @@ import { Brush } from "./Brush.mjs";
 import "./tweakpane-3.0.7.js";
 import "./tweakpane-plugin-essentials-0.1.4.js";
 import { defaultOptions as options } from "./options.mjs";
-import { Snapshotter } from "./Snapshotter.mjs";
 import { RenderTexture } from "./RenderTexture.mjs";
 import { TextureQuad } from "./Quad.mjs";
+import { EventNode } from "./EventNode.mjs";
+import { History } from "./History.mjs";
 
 const setupGui = ({brush, undo, redo, clear, textureQuad}) => {
   const pane = new Tweakpane.Pane();
@@ -42,6 +43,8 @@ const setupGui = ({brush, undo, redo, clear, textureQuad}) => {
 };
 
 const main = () => {
+  const events = new EventNode();
+  const history = new History(events);
   let dragging = false;
   let latestPos = {x: 0, y: 0};
 
@@ -60,7 +63,6 @@ const main = () => {
   const imageTexture = new RenderTexture({gl: bufferGl});
   const textureQuad = new TextureQuad({gl: bufferGl, dither: options.dither});
   const brush = new Brush({canvas: buffer, gl: bufferGl, imageTexture});
-  const snapshotter = new Snapshotter(buffer);
 
   const updateDisplay = () => {
     bufferGl.viewport(0, 0, buffer.width, buffer.height);
@@ -84,20 +86,29 @@ const main = () => {
   };
 
   const undo = () => {
-    // snapshotter.undo();
+    history.undo();
     updateDisplay();
   };
   const redo = () => {
-    // snapshotter.redo();
+    history.redo();
     updateDisplay();
   };
+
   const clear = () => {
+    events.emit({name: 'checkpoint'});
+    events.emit({name: 'clear'});
+  };
+  const internalClear = () => {
     imageTexture.bindFramebuffer();
     bufferGl.clearColor(1, 1, 1, 1);
     bufferGl.clear(bufferGl.COLOR_BUFFER_BIT);
     imageTexture.unbindFramebuffer();
     updateDisplay();
   };
+  events.on('clear', function onClear() {
+    internalClear();
+  });
+
   const exportImage = async () => {
     const blob = await new Promise((resolve) => buffer.toBlob(resolve));
     window.open(URL.createObjectURL(blob), "_blank");
@@ -145,17 +156,27 @@ const main = () => {
     }
   };
 
+  events.on('brushMove', function onBrushMove({params}) {
+    brush.moveTo(params);
+  });
+  events.on('brushStroke', function onBrushMove({params}) {
+    brush.strokeTo(params);
+  });
+
   const onPointerDown = (event) => {
     if (event.target !== display) {
       return;
     }
     dragging = true;
-    brush.moveTo({
-      ...eventPos(event),
-      ...eventTilt(event),
-      pressure: event.pressure,
-    })
-    // snapshotter.save();
+    events.emit({name: 'checkpoint'});
+    events.emit({
+      name: 'brushMove', 
+      params: {
+        ...eventPos(event),
+        ...eventTilt(event),
+        pressure: event.pressure,
+      },
+    });
   };
 
   const onPointerUp = (event) => {
@@ -171,18 +192,24 @@ const main = () => {
     if (dragging) {
       if (event.getCoalescedEvents) {
         for (const e of event.getCoalescedEvents()) {
-          brush.strokeTo({
-            ...eventPos(e),
-            ...eventTilt(e),
-            pressure: event.pressure,
-          })
+          events.emit({
+            name: 'brushStroke', 
+            params: {
+              ...eventPos(e),
+              ...eventTilt(e),
+              pressure: e.pressure,
+            },
+          });
         }
       }
-      brush.strokeTo({
-        ...eventPos(event),
-        ...eventTilt(event),
-        pressure: event.pressure,
-      })
+      events.emit({
+        name: 'brushStroke', 
+        params: {
+          ...eventPos(event),
+          ...eventTilt(event),
+          pressure: event.pressure,
+        },
+      });
     }
     event.preventDefault();
   };
