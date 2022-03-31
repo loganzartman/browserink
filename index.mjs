@@ -196,6 +196,18 @@ const main = () => {
   const onPointerUpdate = (event) => {
     latestPos = eventPos(event);
 
+    // debug
+    {
+      const {width, height, pressure, tangentialPressure, tiltX, tiltY, twist, pointerType, button, buttons} = event;
+      events.emit({
+        name: 'debugText',
+        key: 'pointer',
+        value: {
+          width, height, pressure, tangentialPressure, tiltX, tiltY, twist, pointerType, button, buttons
+        },
+      });
+    }
+
     if (dragging) {
       if (event.getCoalescedEvents) {
         for (const e of event.getCoalescedEvents()) {
