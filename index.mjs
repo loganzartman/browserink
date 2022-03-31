@@ -95,7 +95,7 @@ const main = () => {
   };
 
   const clear = () => {
-    events.emit({name: 'checkpoint'});
+    events.emit({name: 'checkpoint', displayName: 'Clear'});
     events.emit({name: 'clear'});
   };
   const internalClear = () => {
@@ -168,7 +168,7 @@ const main = () => {
       return;
     }
     dragging = true;
-    events.emit({name: 'checkpoint'});
+    events.emit({name: 'checkpoint', displayName: 'Stroke'});
     events.emit({
       name: 'brushMove', 
       params: {
