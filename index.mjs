@@ -6,6 +6,7 @@ import { RenderTexture } from "./RenderTexture.mjs";
 import { TextureQuad } from "./Quad.mjs";
 import { EventNode } from "./EventNode.mjs";
 import { History } from "./History.mjs";
+import { DebugRenderer } from "./DebugRenderer.mjs";
 
 const setupGui = ({brush, undo, redo, clear, textureQuad}) => {
   const pane = new Tweakpane.Pane();
@@ -14,6 +15,7 @@ const setupGui = ({brush, undo, redo, clear, textureQuad}) => {
   const displayPane = pane.addFolder({title: "Display"});
   displayPane.addInput(options, "resolutionScale", {min: 0.1, max: 2.0, step: 0.1});
   displayPane.addInput(textureQuad, "dither");
+  displayPane.addInput(options, "showDebug");
 
   const brushPane = pane.addFolder({title: "Brush"});
   brushPane.addInput(brush, "color", {picker: "inline", expanded: true});
@@ -45,6 +47,7 @@ const setupGui = ({brush, undo, redo, clear, textureQuad}) => {
 const main = () => {
   const events = new EventNode();
   const history = new History(events);
+  const debugRenderer = new DebugRenderer(events);
   let dragging = false;
   let latestPos = {x: 0, y: 0};
 
@@ -83,6 +86,10 @@ const main = () => {
       ...latestPos,
     });
     displayContext.restore();
+
+    if (options.showDebug) {
+      debugRenderer.render(displayContext);
+    }
   };
 
   const undo = () => {
