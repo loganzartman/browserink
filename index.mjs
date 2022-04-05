@@ -195,6 +195,7 @@ const main = () => {
     dragging = false;
   };
 
+  let lastBrushUpdateTime = Date.now();
   const onPointerUpdate = (event) => {
     latestPos = eventPos(event);
 
@@ -234,11 +235,15 @@ const main = () => {
       });
     }
     event.preventDefault();
+    updateDisplay();
+    lastBrushUpdateTime = Date.now();
   };
 
   requestAnimationFrame(function af() {
     requestAnimationFrame(af);
-    updateDisplay();
+    if (Date.now() - lastBrushUpdateTime > framerate.frametime) {
+      updateDisplay();
+    }
   });
 
   window.addEventListener("resize", () => resize(), false);
