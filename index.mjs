@@ -172,10 +172,13 @@ const main = () => {
     brush.strokeTo(params);
   });
 
+  const isEraser = (mouseEvent) => !!(mouseEvent.buttons & (2 | 32));
+
   const onPointerDown = (event) => {
     if (event.target !== display) {
       return;
     }
+    event.preventDefault();
     dragging = true;
     events.emit({name: 'checkpoint', displayName: 'Stroke'});
     events.emit({
@@ -192,10 +195,13 @@ const main = () => {
     if (event.target !== display) {
       return;
     }
+    event.preventDefault();
     dragging = false;
   };
 
   let lastBrushUpdateTime = Date.now();
+
+  let oldColor = brush.color;
   const onPointerUpdate = (event) => {
     latestPos = eventPos(event);
 
@@ -210,6 +216,20 @@ const main = () => {
           width, height, pressure, tangentialPressure, tiltX, tiltY, twist, pointerType, button, buttons
         },
       });
+    }
+
+    if (isEraser(event)) {
+      events.emit({name: 'debugText', record: false, key: 'eraser', value: true});
+      if (oldColor === null) {
+        oldColor = brush.color;
+        brush.color = {r: 255, g: 255, b: 255, a: 1};
+      }
+    } else {
+      events.emit({name: 'debugText', record: false, key: 'eraser', value: false});
+      if (oldColor) {
+        brush.color = oldColor;
+        oldColor = null;
+      }
     }
 
     if (dragging) {
