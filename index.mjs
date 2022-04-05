@@ -201,6 +201,7 @@ const main = () => {
       const {width, height, pressure, tangentialPressure, tiltX, tiltY, twist, pointerType, button, buttons} = event;
       events.emit({
         name: 'debugText',
+        record: false,
         key: 'pointer',
         value: {
           width, height, pressure, tangentialPressure, tiltX, tiltY, twist, pointerType, button, buttons
