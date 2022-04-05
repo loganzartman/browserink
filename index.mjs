@@ -7,6 +7,7 @@ import { TextureQuad } from "./Quad.mjs";
 import { EventNode } from "./EventNode.mjs";
 import { History } from "./History.mjs";
 import { DebugRenderer } from "./DebugRenderer.mjs";
+import { trackFramerate } from "./trackFramerate.mjs";
 
 const setupGui = ({brush, undo, redo, clear, textureQuad}) => {
   const pane = new Tweakpane.Pane();
@@ -48,6 +49,7 @@ const main = () => {
   const events = new EventNode();
   const history = new History(events);
   const debugRenderer = new DebugRenderer(events);
+  const framerate = trackFramerate();
   let dragging = false;
   let latestPos = {x: 0, y: 0};
 
