@@ -201,8 +201,17 @@ const main = () => {
 
   let lastBrushUpdateTime = Date.now();
 
+  let oldButtons = 0;
   let oldColor = brush.color;
   const onPointerUpdate = (event) => {
+    if (event.buttons & 0x1 && !oldButtons) {
+      onPointerDown(event);
+    }
+    if (!(event.buttons & 0x1) && !!oldButtons) {
+      onPointerUp(event);
+    }
+    oldButtons = event.buttons
+
     latestPos = eventPos(event);
 
     // debug
@@ -268,8 +277,8 @@ const main = () => {
 
   window.addEventListener("resize", () => resize(), false);
   window.addEventListener("keydown", onKeyDown, false);
-  window.addEventListener("pointerdown", onPointerDown, false);
-  window.addEventListener("pointerup", onPointerUp, false);
+  window.addEventListener("pointerdown", (e) => e.target === display && e.preventDefault(), false);
+  window.addEventListener("pointerup", (e) => e.target === display && e.preventDefault(), false);
   window.addEventListener("pointermove", onPointerUpdate, false);
 };
 
